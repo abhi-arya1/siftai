@@ -3,7 +3,6 @@
     windows_subsystem = "windows"
 )]
 
-use tauri::api::path::config_dir;
 use tauri::{CustomMenuItem, Menu, Submenu};
 
 mod invokes;
@@ -23,14 +22,7 @@ fn main() {
     let quit = CustomMenuItem::new("quit".to_string(), "Quit");
     let submenu = Submenu::new("File", Menu::new().add_item(quit));
 
-    let config_path = config_dir() / "sift";
-
-    if let Some(config_path) = config_dir() {
-        // Convert PathBuf to a string and print it
-        println!("{}", config_path.display()); // Use `display()` for PathBuf printing
-    } else {
-        println!("Failed to get config directory");
-    }
+    let cfg_path = util::config_path();
 
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![gh_oauth, run_subprocess])
