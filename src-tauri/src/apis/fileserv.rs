@@ -14,7 +14,7 @@ async fn get_file(req: HttpRequest, path: web::Path<PathBuf>) -> impl Responder 
     };
 
     let full_path = Path::new(&home_dir).join(path.into_inner());
-    
+
     if !full_path.exists() || full_path.is_dir() {
         return HttpResponse::NotFound().body(format!("File not found, {}", full_path.display()));
     }
@@ -49,7 +49,7 @@ pub async fn serve() -> std::io::Result<()> {
     })
     .bind("127.0.0.1:35438")?;
 
-    println!("File Service Running");
+    println!("File Services Running on http://localhost:35438");
     server.run().await
     // tokio::select! {
     //     _ = server.run() => {

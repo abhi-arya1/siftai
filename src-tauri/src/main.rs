@@ -6,6 +6,7 @@
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
 use tauri::{CustomMenuItem, Manager, Menu, Submenu};
+use tokio::signal;
 use util::db_formatted_path;
 
 mod apis;
@@ -55,27 +56,35 @@ fn main() {
 
     let app_cfg = util::load_config().unwrap();
     println!("\nBeginning Sift.AI Startup...\n");
-    // files::parse_files();
 
     let command = format!("chroma run --path {} --port 35436", db_formatted_path());
     let chroma_clone = start_chroma_server(&command);
 
     println!("Chroma server is running in the background.");
-
     println!("AppConfig: {:?}", app_cfg);
-
     println!("\nCompleted Startup Configurations\n");
 
     tauri::Builder::default()
         .setup(|app| {
             let app_handle = app.handle();
+
+            // Spawn the background server and handle Ctrl+C signal
             tauri::async_runtime::spawn(async move {
                 let server_handle = tokio::spawn(apis::fileserv::serve());
+
+                // Handle Ctrl+C for graceful shutdown
+                tokio::spawn(async move {
+                    if signal::ctrl_c().await.is_ok() {
+                        println!("Ctrl+C detected, shutting down...");
+                        app_handle.exit(0);
+                    }
+                });
 
                 if let Err(e) = server_handle.await {
                     eprintln!("Server error: {}", e);
                 }
             });
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![gh_oauth, run_subprocess])
