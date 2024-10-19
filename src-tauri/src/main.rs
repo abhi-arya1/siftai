@@ -93,7 +93,7 @@ fn main() {
     println!("Chroma database is configured.\n");
 
     println!("Parsing files in the background...");
-    // files::parse_files();
+    files::parse_files();
 
     println!("\nCompleted Startup Configurations\n");
 
