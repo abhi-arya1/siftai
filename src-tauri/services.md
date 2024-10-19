@@ -11,14 +11,16 @@
   - Persistently Running
 
 - 35438 - File Server API
-
   - Run this by requesting `http://localhost:35438/path/to/file` from the Next.js Frontend
   - The path must be beyond the user's HOME directory.
   - For example, if the abs path is `/Users/name/Documents/file.txt`, the path should be `/Documents/file.txt`
 
-- 35439 - Slack OAuth
-
+- 35439 - Slack OAuth 
   - Run this by invoking `slk_oauth` from the Next.js frontend
+
+- 35440 - Discord OAuth
+  - Run this by invoking `disc_oauth` from the Next.js frontend
+
 
 - 35440 - Notion OAuth
   - Run this by invoking `ntn_oauth` from the Next.js frontend

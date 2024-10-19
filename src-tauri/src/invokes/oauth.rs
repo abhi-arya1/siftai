@@ -4,6 +4,7 @@ use tokio::sync::mpsc;
 use warp::Filter;
 use open;
 use base64::encode;
+use urlencoding;
 
 use crate::util;
 
@@ -33,6 +34,11 @@ struct GitHubAccessTokenResponse {
 
 #[derive(Deserialize, Debug)]
 struct SlackAccessTokenResponse {
+    access_token: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct DiscordAccessTokenResponse {
     access_token: String,
 }
 
@@ -159,8 +165,6 @@ pub async fn github_oauth() -> Result<String, String> {
         Err("Error: Unable to get access token".to_string())
     }
 }
-
-
 
 pub async fn slack_oauth() -> Result<String, String> {
     let slack_client_id = "7906164823108.7891603819943";
@@ -390,6 +394,125 @@ pub async fn notion_oauth() -> Result<String, String> {
 
         Ok(token_response.access_token)
         // Ok("test".to_string())
+    } else {
+        let error_text = response.text().await.unwrap_or_else(|_| "No error text".to_string());
+        Err(format!("Error: Unable to get access token. {}", error_text))
+    }
+}
+
+pub async fn discord_oauth() -> Result<String, String> {
+    let discord_client_id = "1297308893587705877";
+    let discord_client_secret = "xyl8M_aCN0rDEbLaGAZK6OH6mi2MZNVD";
+
+    let mut cfg = util::read_config().unwrap();
+
+    // Return the token if it already exists
+    if !cfg.discord_token.is_empty() {
+        return Ok(cfg.discord_token);
+    }
+
+    let (tx, mut rx) = tokio::sync::mpsc::channel::<String>(1);
+
+    // Define the redirect route to handle the callback
+    let redirect_route = warp::path!("disc_auth_callback")
+        .and(warp::query::<std::collections::HashMap<String, String>>())
+        .and(warp::any().map(move || tx.clone())) // Move tx into the warp handler
+        .and_then(|params: std::collections::HashMap<String, String>, tx: tokio::sync::mpsc::Sender<String>| async move {
+            if let Some(code) = params.get("code") {
+                tx.send(code.clone()) // Send the code to the main handler
+                    .await
+                    .map_err(|e| warp::reject::custom(OAuthError(e.to_string())))?;
+                Ok::<_, warp::Rejection>(warp::reply::html("Authorization successful! You can close this window."))
+            } else {
+                Err(warp::reject::custom(OAuthError("No code parameter found".to_string())))
+            }
+        });
+
+    let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel();
+    
+    // Start the Warp server with graceful shutdown
+    let server = warp::serve(redirect_route)
+        .tls()
+        .cert_path("./cert.pem")
+        .key_path("./key.pem");
+    let (_addr, server_fut) = server.bind_with_graceful_shutdown(
+        ([127, 0, 0, 1], 35440),
+        async {
+            shutdown_rx.await.ok();
+        },
+    );
+
+    // Spawn the Warp server
+    tokio::spawn(server_fut);
+
+    // Define the OAuth scopes required by your Slack bot
+    let scopes = "messages.read+dm_channels.read";
+    let encoded_url = urlencoding::encode("https://localhost:35440/disc_auth_callback");
+
+    // Slack authorization URL with redirect_uri pointing to the Warp server
+    let auth_url = format!(
+        "https://discord.com/oauth2/authorize?response_type=code&client_id={}&scope=identify%20messages.read&redirect_uri={}",
+        discord_client_id, encoded_url
+    );
+
+    // Open the authorization URL in the browser
+    open_url(auth_url);
+
+    // Wait for the authorization code from the callback
+
+    let discord_authorization_code = match rx.recv().await {
+        Some(code) => {
+            println!("Received authorization code: {}", code);
+            code  // If the code is received successfully, continue.
+        },
+        None => {
+            let error_message = "Failed to receive authorization code".to_string();
+            eprintln!("Error: {}", error_message);
+            return Err(error_message);  // Log and return the error if no code is received.
+        }
+    };
+
+    // Shutdown the Warp server after receiving the code
+    let _ = shutdown_tx.send(());
+
+    // Exchange the authorization code for an access token
+    let client = reqwest::Client::new();
+    let token_url = "https://discord.com/api/oauth2/token";
+
+    let params = [
+        ("client_id", discord_client_id),
+        ("client_secret", discord_client_secret),
+        ("code", discord_authorization_code.as_str()),
+        ("redirect_uri", "https://localhost:35440/disc_auth_callback")
+    ];
+
+    let response = client
+        .post(token_url)
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .form(&params)
+        .send()
+        .await
+        .map_err(|e| {
+            eprintln!("Error occurred: {}", e.to_string());
+            e.to_string()
+        })?;
+
+    if response.status().is_success() {
+        let token_response: DiscordAccessTokenResponse = response
+            .json()
+            .await
+            .map_err(|e| {
+                eprintln!("Failed to deserialize JSON: {:?}", e);
+                e.to_string()
+            })?;
+
+        // // Store the access token in the configuration
+        cfg.discord_token = token_response.access_token.clone();
+        util::write_config(cfg).unwrap();
+
+        println!("Discord authentication successful!");
+
+        Ok(token_response.access_token)
     } else {
         let error_text = response.text().await.unwrap_or_else(|_| "No error text".to_string());
         Err(format!("Error: Unable to get access token. {}", error_text))

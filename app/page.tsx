@@ -4,7 +4,13 @@ import Image from "next/image";
 // import sift_logo from "../src-tauri/icons/sift_logo.png";
 import { Menu, Transition, Dialog } from "@headlessui/react";
 import { motion } from "framer-motion";
+<<<<<<< HEAD
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faDiscord } from '@fortawesome/free-brands-svg-icons';
+
+=======
 import { getClient, ResponseType } from '@tauri-apps/api/http';
+>>>>>>> 5aa3cf4d9b4c3fb856d9d28973495aa485a9d40d
 import {
   Command,
   Search,
@@ -193,7 +199,11 @@ const FileExplorer = () => {
     useState(false);
   const [ghToken, setGhToken] = useState<string | null>(null);
   const [slackToken, setSlackToken] = useState<string | null>(null);
+<<<<<<< HEAD
+  const [discordToken, setDiscordToken] = useState<string | null>(null);
+=======
   const [notionToken, setNotionToken] = useState<string | null>(null);
+>>>>>>> 5aa3cf4d9b4c3fb856d9d28973495aa485a9d40d
   // const invoke = window.__TAURI__.invoke;
 
   useEffect(() => {
@@ -222,6 +232,17 @@ const FileExplorer = () => {
       });
   };
 
+<<<<<<< HEAD
+  const handleDiscordOauth = async () => {
+    invoke("disc_oauth")
+      .then((res) => {
+        setDiscordToken(res as string);
+      })
+      .catch((err) => {
+        setDiscordToken(err as string);
+      });
+  };
+=======
   const handleNotionOauth = async () => {
     invoke("ntn_oauth")
       .then((res) => {
@@ -231,6 +252,7 @@ const FileExplorer = () => {
         setNotionToken(err as string);
       });
   }
+>>>>>>> 5aa3cf4d9b4c3fb856d9d28973495aa485a9d40d
 
   const [files, setFiles] = useState<string | null>(null); // Declare state to hold the files
 
@@ -380,6 +402,9 @@ const FileExplorer = () => {
                   onClick={handleSlackOauth}
                 />
                 <IntegrationCard
+<<<<<<< HEAD
+                  logo={() => <FontAwesomeIcon icon={faDiscord} />}
+=======
                   logo={IconBrandNotion}
                   name="Notion"
                   isAuthenticated={!!notionToken}
@@ -387,10 +412,11 @@ const FileExplorer = () => {
                 />
                 {/* <IntegrationCard
                   logo={Discord}
+>>>>>>> 5aa3cf4d9b4c3fb856d9d28973495aa485a9d40d
                   name="Discord"
-                  isAuthenticated={!!ghToken}
-                  onClick={handleGitHubOauth}
-                /> */}
+                  isAuthenticated={!!discordToken}
+                  onClick={handleDiscordOauth}
+                />
               </div>
             </Dialog.Panel>
           </div>
