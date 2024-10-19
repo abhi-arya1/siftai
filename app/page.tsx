@@ -4,6 +4,9 @@ import Image from "next/image";
 // import sift_logo from "../src-tauri/icons/sift_logo.png";
 import { Menu, Transition, Dialog } from "@headlessui/react";
 import { motion } from "framer-motion";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faDiscord } from '@fortawesome/free-brands-svg-icons';
+
 import {
   Command,
   Search,
@@ -111,6 +114,7 @@ const FileExplorer = () => {
     useState(false);
   const [ghToken, setGhToken] = useState<string | null>(null);
   const [slackToken, setSlackToken] = useState<string | null>(null);
+  const [discordToken, setDiscordToken] = useState<string | null>(null);
   // const invoke = window.__TAURI__.invoke;
 
   useEffect(() => {
@@ -136,6 +140,16 @@ const FileExplorer = () => {
       })
       .catch((err) => {
         setSlackToken(err as string);
+      });
+  };
+
+  const handleDiscordOauth = async () => {
+    invoke("disc_oauth")
+      .then((res) => {
+        setDiscordToken(res as string);
+      })
+      .catch((err) => {
+        setDiscordToken(err as string);
       });
   };
 
@@ -286,12 +300,12 @@ const FileExplorer = () => {
                   isAuthenticated={!!slackToken}
                   onClick={handleSlackOauth}
                 />
-                {/* <IntegrationCard
-                  logo={Discord}
+                <IntegrationCard
+                  logo={() => <FontAwesomeIcon icon={faDiscord} />}
                   name="Discord"
-                  isAuthenticated={!!ghToken}
-                  onClick={handleGitHubOauth}
-                /> */}
+                  isAuthenticated={!!discordToken}
+                  onClick={handleDiscordOauth}
+                />
               </div>
             </Dialog.Panel>
           </div>

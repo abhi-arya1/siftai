@@ -37,6 +37,7 @@ actix-web = "4.0"
 actix-files = { version = "0.6.0-beta.16" }
 base64 = "0.13"
 thiserror = "1.0"
+urlencoding =  "2.1.3"
 
 
 [features]

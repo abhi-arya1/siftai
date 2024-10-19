@@ -15,3 +15,6 @@
 
 - 35439 - Slack OAuth 
   - Run this by invoking `slk_oauth` from the Next.js frontend
+
+- 35440 - Discord OAuth
+  - Run this by invoking `disc_oauth` from the Next.js frontend

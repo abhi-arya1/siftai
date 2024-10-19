@@ -71,6 +71,11 @@ async fn slk_oauth() -> Result<String, String> {
     invokes::slack_oauth().await
 }
 
+#[tauri::command]
+async fn disc_oauth() -> Result<String, String> {
+    invokes::discord_oauth().await
+}
+
 fn main() {
     let quit = CustomMenuItem::new("quit".to_string(), "Quit");
     let submenu = Submenu::new("File", Menu::new().add_item(quit));
@@ -115,7 +120,7 @@ fn main() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![gh_oauth, run_subprocess, gh_find, slk_oauth])
+        .invoke_handler(tauri::generate_handler![gh_oauth, run_subprocess, gh_find, slk_oauth, disc_oauth])
         .menu(Menu::new().add_submenu(submenu))
         .on_window_event(move |event| {
             if let tauri::WindowEvent::CloseRequested { .. } = event.event() {

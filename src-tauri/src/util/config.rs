@@ -13,6 +13,7 @@ pub struct AppConfig {
     pub google_token: String,
     pub atlassian_token: String,
     pub slack_token: String,
+    pub discord_token: String,
 }
 
 pub fn db_path() -> PathBuf {
@@ -79,6 +80,7 @@ pub fn load_config() -> Result<AppConfig, Box<dyn Error>> {
             google_token: "".to_string(),
             atlassian_token: "".to_string(),
             slack_token: "".to_string(),
+            discord_token: "".to_string(), 
         };
 
         write_config(default_cfg.clone())?;
