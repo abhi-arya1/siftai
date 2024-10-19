@@ -48,6 +48,11 @@ async fn gh_oauth() -> Result<String, String> {
     invokes::github_oauth().await
 }
 
+#[tauri::command]
+async fn gh_find(token: &str) -> Result<String, String> {
+    invokes::get_repos_and_files(token).await
+}
+
 fn main() {
     let quit = CustomMenuItem::new("quit".to_string(), "Quit");
     let submenu = Submenu::new("File", Menu::new().add_item(quit));

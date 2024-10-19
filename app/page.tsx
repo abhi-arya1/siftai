@@ -71,7 +71,7 @@ const FileExplorer = () => {
   const [isIntegrationsDialogOpen, setIsIntegrationsDialogOpen] =
     useState(false);
   const [ghToken, setGhToken] = useState<string | null>(null);
-  const invoke = window.__TAURI__.invoke;
+  // const invoke = window.__TAURI__.invoke;
 
   const handleGitHubOauth = async () => {
     invoke("gh_oauth")
@@ -81,6 +81,24 @@ const FileExplorer = () => {
       .catch((err) => {
         setGhToken(err as string);
       });
+  };
+
+  const [files, setFiles] = useState<string | null>(null); // Declare state to hold the files
+
+  const getGitHubFiles = async (s: String) => {
+      try {
+          const result = await invoke("gh_find", { access_token: s }); // Ensure the correct parameter structure
+          console.log("Files retrieved:", result);
+          setFiles("hello"); // Update state with the result
+      } catch (error) {
+          console.error("Error fetching GitHub files:", error);
+          // Optionally handle the error here (e.g., set an error state)
+      }
+  };
+
+  const handleFetchFiles = () => {
+      const param = "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"; // Set your parameter value here
+      getGitHubFiles(param);
   };
 
   const getFileActions = (fileType: any) => {
@@ -320,6 +338,12 @@ const FileExplorer = () => {
         </div>
 
         {/* Search bar */}
+        <button onClick={handleFetchFiles}>
+          Hello World 
+          <div>
+            {files}
+          </div>
+        </button>
         <div className="h-12 border-t flex px-1.5 items-center gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
