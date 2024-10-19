@@ -9,7 +9,6 @@ import {
   Command,
   Search,
   Settings,
-  Github,
   Slack,
   CheckIcon,
   ArrowUpRight,
@@ -21,7 +20,7 @@ import {
   FileText,
   ImageIcon,
 } from "lucide-react";
-import { IconBrandNotion } from "@tabler/icons-react";
+import { IconBrandGithub, IconBrandNotion } from "@tabler/icons-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@nextui-org/kbd";
@@ -369,7 +368,7 @@ const FileExplorer = () => {
 
               <div className="space-y-2">
                 <IntegrationCard
-                  logo={Github}
+                  logo={IconBrandGithub}
                   name="GitHub"
                   isAuthenticated={!!ghToken}
                   onClick={handleGitHubOauth}

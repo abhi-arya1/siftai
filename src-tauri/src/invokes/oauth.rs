@@ -296,7 +296,7 @@ pub async fn notion_oauth() -> Result<String, String> {
     let (tx, mut rx) = tokio::sync::mpsc::channel::<String>(1);
 
     // Define the redirect route to handle the callback
-    let redirect_route = warp::path!("ntn_auth_callback")
+    let redirect_route = warp::path!("ntn_oauth_callback")
         .and(warp::query::<std::collections::HashMap<String, String>>())
         .and(warp::any().map(move || tx.clone())) // Move tx into the warp handler
         .and_then(|params: std::collections::HashMap<String, String>, tx: tokio::sync::mpsc::Sender<String>| async move {
@@ -326,12 +326,9 @@ pub async fn notion_oauth() -> Result<String, String> {
     tokio::spawn(server_fut);
 
     // Notion authorization URL with redirect_uri pointing to the Warp server
-    let auth_url = format!(
-        "https://api.notion.com/v1/oauth/authorize?client_id=124d872b-594c-801e-bef4-00371de7fd49&response_type=code&owner=user&redirect_uri=http%3A%2F%2Flocalhost%3A35440%2Fntn_oauth_callback",
+    open_url(
+        "https://api.notion.com/v1/oauth/authorize?client_id=124d872b-594c-801e-bef4-00371de7fd49&response_type=code&owner=user&redirect_uri=http%3A%2F%2Flocalhost%3A35440%2Fntn_oauth_callback".to_string()
     );
-
-    // Open the authorization URL in the browser
-    open_url(auth_url);
 
     // Wait for the authorization code from the callback
     let notion_auth_code = match rx.recv().await {
