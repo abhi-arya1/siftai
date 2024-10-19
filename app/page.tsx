@@ -1,9 +1,10 @@
 "use client";
 import React, { useState, useEffect, Fragment } from "react";
-import { Menu, Transition } from "@headlessui/react";
-import { Command, Search } from "lucide-react";
+import { Menu, Transition, Dialog } from "@headlessui/react";
+import { Command, Search, Settings, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
+import { Kbd } from "@nextui-org/kbd";
 import { cn } from "@/lib/utils";
 
 const mockFiles = [
@@ -28,6 +29,8 @@ const FileExplorer = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isIntegrationsDialogOpen, setIsIntegrationsDialogOpen] =
+    useState(false);
 
   // Handle system theme changes
   const [systemTheme, setSystemTheme] = useState<"light" | "dark">("dark");
@@ -91,6 +94,87 @@ const FileExplorer = () => {
 
   return (
     <div className="h-screen flex flex-col bg-white dark:bg-muted text-black dark:text-white">
+      {/* SETTINGS MODAL */}
+      <div className="h-8 border-b border-zinc-700 flex justify-end items-center px-4">
+        <Menu>
+          <Menu.Button className="p-2 rounded-lg hover:drop-shadow-xl">
+            <Settings size={14} />
+          </Menu.Button>
+          <Transition
+            as={Fragment}
+            enter="transition ease-out duration-100"
+            enterFrom="transform opacity-0 scale-95"
+            enterTo="transform opacity-100 scale-100"
+            leave="transition ease-in duration-75"
+            leaveFrom="transform opacity-100 scale-100"
+            leaveTo="transform opacity-0 scale-95"
+          >
+            <Menu.Items className="absolute right-0 mt-20 w-56 origin-top-right rounded-xl border border-gray-200 dark:border-white/5 bg-white dark:bg-muted p-1 text-sm/6 text-gray-800 dark:text-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+              <Menu.Item>
+                {({ active }) => (
+                  <button
+                    className={`group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 ${
+                      active ? "bg-gray-100 dark:bg-white/10" : ""
+                    } hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out`}
+                    onClick={() => setIsIntegrationsDialogOpen(true)}
+                  >
+                    Integrations
+                  </button>
+                )}
+              </Menu.Item>
+            </Menu.Items>
+          </Transition>
+        </Menu>
+
+        <Dialog
+          open={isIntegrationsDialogOpen}
+          onClose={() => setIsIntegrationsDialogOpen(false)}
+          className="relative z-50"
+        >
+          {/* The backdrop, rendered as a fixed sibling to the panel container */}
+          <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+
+          {/* Full-screen container to center the panel */}
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <Dialog.Panel className="mx-auto max-w-sm rounded-xl bg-white dark:bg-muted p-6 shadow-xl">
+              <div className="flex justify-between items-center mb-4">
+                <Dialog.Title className="text-lg font-medium dark:text-white">
+                  Integrations
+                </Dialog.Title>
+                <button
+                  onClick={() => setIsIntegrationsDialogOpen(false)}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Add your integration buttons here */}
+              <div className="space-y-2">
+                <button className="w-full p-2 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white transition-colors">
+                  GitHub Integration
+                </button>
+                <button className="w-full p-2 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white transition-colors">
+                  Slack Integration
+                </button>
+                <button className="w-full p-2 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white transition-colors">
+                  Google Drive Integration
+                </button>
+              </div>
+
+              <div className="mt-6">
+                <button
+                  onClick={() => setIsIntegrationsDialogOpen(false)}
+                  className="w-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-lg py-2 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </Dialog.Panel>
+          </div>
+        </Dialog>
+      </div>
+
       {/* Main content area */}
       <div className="flex-1 flex overflow-hidden">
         {/* File tree view */}
@@ -155,12 +239,12 @@ const FileExplorer = () => {
                   <Menu.Item key={action.id}>
                     {({ active }) => (
                       <button
-                        className={`group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 ${
+                        className={`group flex w-full justify-between gap-2 rounded-lg py-1.5 px-3 ${
                           active ? "bg-gray-100 dark:bg-white/10" : ""
                         } hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out`}
                         onClick={() => handleMenuAction(action.id)}
                       >
-                        <span className="flex-1">{action.label}</span>
+                        <span className="justify-start">{action.label}</span>
                         <kbd
                           className={cn(
                             "px-1.5 py-0.5 text-[10px] font-medium rounded border",
@@ -231,14 +315,7 @@ const FileExplorer = () => {
               )}
             />
           </div>
-          <kbd
-            className={cn(
-              "px-1.5 py-0.5 text-[10px] font-medium rounded border",
-              systemTheme === "dark"
-                ? "bg-zinc-800 border-zinc-700 text-zinc-400"
-                : "bg-zinc-100 border-zinc-200 text-zinc-500",
-            )}
-          >
+          <kbd className="px-1.5 py-0.5 text-[10px] font-medium rounded border dark:bg-zinc-800 bg-zinc-100 border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
             ⌘K
           </kbd>
         </div>
@@ -271,7 +348,7 @@ const FileTreeItem = ({ file, onFileSelect, selectedFile, level = 0 }) => {
       <button
         className={cn(
           "w-full text-left px-2 py-1 text-sm rounded flex items-center",
-          selectedFile?.id === file.id && "bg-gray-100",
+          selectedFile?.id === file.id && "bg-gray-100 dark:bg-white/10",
           "hover:bg-gray-100 dark:hover:bg-white/10",
         )}
         style={{ paddingLeft: `${level * 12 + 8}px` }}
