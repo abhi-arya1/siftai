@@ -32,7 +32,7 @@ pub async fn github_oauth() -> Result<String, String> {
 
     let (tx, mut rx) = mpsc::channel::<String>(1);
 
-    let redirect_route = warp::path!("callback")
+    let redirect_route = warp::path!("gh_auth_callback")
         .and(warp::query::<std::collections::HashMap<String, String>>())
         .and(warp::any().map(move || tx.clone()))
         .and_then(|params: std::collections::HashMap<String, String>, 
@@ -51,7 +51,7 @@ pub async fn github_oauth() -> Result<String, String> {
     
     let server = warp::serve(redirect_route);
     let (_addr, server) = server.bind_with_graceful_shutdown(
-        ([127, 0, 0, 1], 8080),
+        ([127, 0, 0, 1], 34565),
         async {
             shutdown_rx.await.ok();
         },
@@ -60,7 +60,7 @@ pub async fn github_oauth() -> Result<String, String> {
     tokio::spawn(server);
 
     let auth_url = format!(
-        "https://github.com/login/oauth/authorize?client_id={}&scope=repo,user&redirect_uri=http://localhost:8080/callback",
+        "https://github.com/login/oauth/authorize?client_id={}&scope=repo,user&redirect_uri=http://localhost:34565/gh_auth_callback",
         github_client_id
     );
 
@@ -99,7 +99,7 @@ pub async fn github_oauth() -> Result<String, String> {
             .await
             .map_err(|e| e.to_string())?;
 
-        println!("Access Token: {}", token_response.access_token);
+        // println!("Access Token: {}", token_response.access_token);
         Ok(token_response.access_token)
     } else {
         Err("Error: Unable to get access token".to_string())
