@@ -8,12 +8,11 @@ use tauri::api::path::config_dir;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AppConfig {
     pub github_token: String,
-    pub github_username: String,
     pub notion_token: String,
     pub google_token: String,
     pub atlassian_token: String,
+    pub slack_token: String, 
 }
-
 
 pub fn db_path() -> PathBuf {
     if let Some(mut db_pt) = config_dir() {
@@ -78,10 +77,10 @@ pub fn load_config() -> Result<AppConfig, Box<dyn Error>> {
     if !cfg_path.exists() {
         let default_cfg = AppConfig {
             github_token: "".to_string(),
-            github_username: "".to_string(),
             notion_token: "".to_string(),
             google_token: "".to_string(),
             atlassian_token: "".to_string(),
+            slack_token: "".to_string()
         };
 
         write_config(default_cfg.clone())?;

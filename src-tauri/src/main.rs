@@ -65,6 +65,11 @@ async fn gh_find(token: &str) -> Result<String, String> {
     invokes::get_repos_and_files(token).await
 }
 
+#[tauri::command]
+async fn slack_find() -> Result<String, String> {
+    invokes::slack_oauth().await
+}
+
 fn main() {
     let quit = CustomMenuItem::new("quit".to_string(), "Quit");
     let submenu = Submenu::new("File", Menu::new().add_item(quit));
@@ -106,7 +111,7 @@ fn main() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![gh_oauth, run_subprocess])
+        .invoke_handler(tauri::generate_handler![gh_oauth, run_subprocess, gh_find, slack_find])
         .menu(Menu::new().add_submenu(submenu))
         .on_window_event(move |event| {
             if let tauri::WindowEvent::CloseRequested { .. } = event.event() {

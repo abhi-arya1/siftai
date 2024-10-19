@@ -1,5 +1,3 @@
-
-
 pub fn run_cmd(command: String) -> Result<String, String> {
     let mut parts = command.split_whitespace();
     let program = parts.next().ok_or("No command provided".to_string())?;

@@ -12,3 +12,6 @@
    - Run this by requesting `http://localhost:35438/path/to/file` from the Next.js Frontend
    - The path must be beyond the user's HOME directory. 
     - For example, if the abs path is `/Users/name/Documents/file.txt`, the path should be `/Documents/file.txt`
+
+- 35439 - Slack OAuth 
+  - New Slack Bot

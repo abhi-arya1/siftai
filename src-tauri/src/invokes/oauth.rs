@@ -30,9 +30,27 @@ struct GitHubAccessTokenResponse {
     scope: String
 }
 
+#[derive(Deserialize, Debug)]
+struct SlackAccessTokenResponse {
+    ok: bool,
+    access_token: String,
+    team: SlackTeam,
+    authed_user: SlackAuthedUser,
+}
+
+#[derive(Deserialize, Debug)]
+struct SlackTeam {
+    id: String,
+    name: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct SlackAuthedUser {
+    id: String,
+    access_token: String,
+}
 
 pub async fn github_oauth() -> Result<String, String> {
-
     let github_client_id = "Ov23liOMmuWUdFA35oZl";
     let github_client_secret = "50b43b1fab7fd17c4f3acf754268ddcddfa34fc5";
 
@@ -139,18 +157,118 @@ pub async fn github_oauth() -> Result<String, String> {
                     e.to_string()
                 })?;
 
-            cfg.github_username = user_data.login.clone();
+            // cfg.github_username = user_data.login.clone();
         } else {
             eprintln!("Failed to get user data: {:?}", user_res);
             let error_text = user_res.text().await.unwrap_or_else(|_| "No error text".to_string());
             eprintln!("Error details: {}", error_text);
         }
 
-        println!("github token: {}, github_username: {}", cfg.github_token, cfg.github_username);
+        println!("github token: {}", cfg.github_token);
         util::write_config(cfg).unwrap();
 
         Ok(token_response.access_token)
     } else {
         Err("Error: Unable to get access token".to_string())
+    }
+}
+
+pub async fn slack_oauth() -> Result<String, String> {
+    let slack_client_id = "7906164823108.7891603819943";
+    let slack_client_secret = "4cd4649f28472fb5d5299f85e8696ed0";
+
+    let mut cfg = util::read_config().unwrap();
+
+    if !cfg.slack_token.is_empty() {
+        return Ok(cfg.slack_token);
+    }
+
+    let (tx, mut rx) = mpsc::channel::<String>(1);
+
+    let redirect_route = warp::path!("slack/oauth/callback")
+        .and(warp::query::<std::collections::HashMap<String, String>>())
+        .and(warp::any().map(move || tx.clone()))
+        .and_then(|params: std::collections::HashMap<String, String>, 
+                  tx: mpsc::Sender<String>| async move {
+            if let Some(code) = params.get("code") {
+                tx.send(code.clone())
+                    .await
+                    .map_err(|e| warp::reject::custom(OAuthError(e.to_string())))?;
+                Ok::<_, warp::Rejection>(warp::reply::html("Authorization successful! You can close this window."))
+            } else {
+                Err(warp::reject::custom(OAuthError("No code parameter found".to_string())))
+            }
+        });
+
+    let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel();
+    
+    let server = warp::serve(redirect_route);
+    let (_addr, server) = server.bind_with_graceful_shutdown(
+        ([127, 0, 0, 1], 35439),
+        async {
+            shutdown_rx.await.ok();
+        },
+    );
+
+    tokio::spawn(server);
+
+    // Slack OAuth scopes - adjust these based on your bot's needs
+    let scopes = "app_mentions:read, channels:read, files:read, links:read, remote_files:read";
+    
+    let auth_url = format!(
+        "https://slack.com/oauth/v2/authorize?client_id={}&scope={}&redirect_uri=https://localhost:35439/slack/oauth/callback",
+        slack_client_id,
+        scopes
+    );
+
+    open_url(auth_url);
+
+    // Wait for the authorization code from the local server
+    let slack_authorization_code = rx.recv()
+        .await
+        .ok_or("Failed to receive authorization code".to_string())?;
+
+    // Shutdown the server after receiving the code
+    let _ = shutdown_tx.send(());
+
+    // Exchange authorization code for an access token
+    let client = Client::new();
+    let token_url = "https://slack.com/api/oauth.v2.access";
+    
+    let params = [
+        ("client_id", slack_client_id),
+        ("client_secret", slack_client_secret),
+        ("code", slack_authorization_code.as_str()),
+        ("redirect_uri", "https://localhost:35439/slack/oauth/callback"),
+    ];
+
+    let response = client
+        .post(token_url)
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .form(&params)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if response.status().is_success() {
+        let token_response: SlackAccessTokenResponse = response
+            .json()
+            .await
+            .map_err(|e| {
+                eprintln!("Failed to deserialize JSON: {:?}", e);
+                e.to_string()
+            })?;
+
+        // Store the tokens in the config
+        cfg.slack_token = token_response.access_token.clone();
+
+        println!("Slack authentication successful!");
+        
+        util::write_config(cfg).unwrap();
+
+        Ok(token_response.access_token)
+    } else {
+        let error_text = response.text().await.unwrap_or_else(|_| "No error text".to_string());
+        Err(format!("Error: Unable to get access token. {}", error_text))
     }
 }
