@@ -5,9 +5,10 @@
 
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
-use tauri::{CustomMenuItem, Menu, Submenu};
+use tauri::{CustomMenuItem, Manager, Menu, Submenu};
 use util::db_formatted_path;
 
+mod apis;
 mod files;
 mod invokes;
 mod util;
@@ -57,8 +58,6 @@ fn main() {
     // files::parse_files();
 
     let command = format!("chroma run --path {} --port 35436", db_formatted_path());
-
-    // Spawn the process
     let chroma_clone = start_chroma_server(&command);
 
     println!("Chroma server is running in the background.");
@@ -68,6 +67,17 @@ fn main() {
     println!("\nCompleted Startup Configurations\n");
 
     tauri::Builder::default()
+        .setup(|app| {
+            let app_handle = app.handle();
+            tauri::async_runtime::spawn(async move {
+                let server_handle = tokio::spawn(apis::fileserv::serve());
+
+                if let Err(e) = server_handle.await {
+                    eprintln!("Server error: {}", e);
+                }
+            });
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![gh_oauth, run_subprocess])
         .menu(Menu::new().add_submenu(submenu))
         .on_window_event(move |event| {
