@@ -3,8 +3,8 @@ from chromadb import Settings
 from sys import argv 
 
 
-if len(argv) != 2:
-    print("Usage: python chroma_sdk.py <path> <action>")
+if len(argv) < 3:
+    print("Usage: python chroma_sdk.py <path> [ get_or_create | add | query ] <args>")
     exit(1)
 
 file = argv[0]
@@ -18,9 +18,9 @@ client = chromadb.PersistentClient(
 def get_or_create():
     try:
         client.get_or_create_collection(name=argv[3])
-        print('Success')
+        print("{ \"status\": \"Success\" }")
     except Exception as e:
-        print(e)
+        print("{ \"status\": \"Failed with error: " + str(e) + "\" }")
 
 
 def add():
@@ -36,9 +36,9 @@ def add():
 
         collection = client.get_or_create_collection(name=coll_name)
         collection.add(documents=docs, ids=ids, metadatas=metadata)
-        print('Success')
+        print("{ \"status\": \"Success\" }")
     except Exception as e:
-        print(e)
+        print("{ \"status\": \"Failed with error: " + str(e) + "\" }")
 
 
 def query_text():
@@ -51,7 +51,7 @@ def query_text():
 
         print(results) 
     except Exception as e:
-        print(e)
+        print("{ \"status\": \"Failed with error: " + str(e) + "\" }")
     
 
 action = {

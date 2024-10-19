@@ -12,6 +12,32 @@ mod files;
 mod invokes;
 mod util;
 
+fn start_chroma_server(command: &str) -> Arc<Mutex<std::process::Child>> {
+    let mut chroma = if cfg!(target_os = "windows") {
+        Arc::new(Mutex::new(
+            Command::new("cmd")
+                .args(&["/C", command]) // Use "/C" for cmd.exe to run a command
+                .stdout(Stdio::inherit()) // Inherit standard output for logging
+                .stderr(Stdio::inherit()) // Inherit standard error for logging
+                .spawn()
+                .expect("Failed to start Chroma server on Windows"),
+        ))
+    } else {
+        Arc::new(Mutex::new(
+            Command::new("sh")
+                .arg("-c")
+                .arg(command)
+                .stdout(Stdio::inherit()) // Inherit standard output for logging
+                .stderr(Stdio::inherit()) // Inherit standard error for logging
+                .spawn()
+                .expect("Failed to start Chroma server on Unix-like system"),
+        ))
+    };
+
+    let chroma_clone = Arc::clone(&chroma);
+    chroma
+}
+
 #[tauri::command]
 fn run_subprocess(command: String) -> Result<String, String> {
     invokes::run_cmd(command)
@@ -27,22 +53,13 @@ fn main() {
     let submenu = Submenu::new("File", Menu::new().add_item(quit));
 
     let app_cfg = util::load_config().unwrap();
-    println!("\nBeginning Startup Configurations\n");
+    println!("\nBeginning Sift.AI Startup...\n");
     // files::parse_files();
 
     let command = format!("chroma run --path {} --port 35436", db_formatted_path());
 
     // Spawn the process
-    let mut chroma = Arc::new(Mutex::new(
-        Command::new("sh")
-            .arg("-c")
-            .arg(&command)
-            .stdout(Stdio::inherit())
-            .stderr(Stdio::inherit())
-            .spawn()
-            .expect("Failed to start Chroma server"),
-    ));
-    let chroma_clone = Arc::clone(&chroma);
+    let chroma_clone = start_chroma_server(&command);
 
     println!("Chroma server is running in the background.");
 
@@ -61,6 +78,7 @@ fn main() {
                         eprintln!("Failed to kill Chroma server: {}", e);
                     }
                 }
+                println!("Goodbye from Sift.AI");
             }
         })
         .run(tauri::generate_context!())

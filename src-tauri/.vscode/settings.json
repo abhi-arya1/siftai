@@ -3,8 +3,8 @@
     {
       "previewLimit": 50,
       "driver": "SQLite",
-      "name": "CHROMA_TEST",
-      "database": "${workspaceFolder:src-tauri}/python/getting_started/chroma.sqlite3"
+      "database": "${workspaceFolder:src-tauri}/python/getting_started/chroma.sqlite3",
+      "name": "TEST2"
     }
   ],
   "sqltools.useNodeRuntime": true
