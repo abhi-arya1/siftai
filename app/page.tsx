@@ -19,6 +19,7 @@ import {
 import { Menu, Transition, Dialog } from "@headlessui/react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { invoke } from "@tauri-apps/api/tauri";
 
 const SAMPLE_FILES = [
   {
@@ -146,6 +147,19 @@ export default function FileExplorer() {
   const [expandedDirs, setExpandedDirs] = useState(new Set([1, 4]));
   const [isCommandMenuOpen, setIsCommandMenuOpen] = useState(false);
   const [commandFilter, setCommandFilter] = useState("");
+  const [token, setToken] = useState("");
+
+  async function handleGitHubLogin() {
+    try {
+      const accessToken = await invoke('start_github_oauth');
+  
+      setToken(accessToken as string);
+      
+    } catch (error) {
+      setToken(`Error during GitHub OAuth: ${error}`);
+    }
+  }
+  
 
   // Get available actions based on current context
   const availableActions = getAvailableActions(selectedFile);
@@ -282,6 +296,7 @@ export default function FileExplorer() {
       {/* Top Bar */}
       <div className="h-12 border-b border-zinc-800 flex items-center px-4 bg-zinc-900/90 backdrop-blur-sm">
         <h1 className="text-sm font-medium text-zinc-200">File Explorer</h1>
+        <button onClick={handleGitHubLogin}>Login with GitHub</button>
       </div>
 
       {/* Main Content Area */}
