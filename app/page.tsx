@@ -2,10 +2,9 @@
 import React, { useState, useEffect, Fragment } from "react";
 import Image from "next/image";
 // import sift_logo from "../src-tauri/icons/sift_logo.png";
-import { readTextFile, readBinaryFile } from "@tauri-apps/api/fs";
-import { convertFileSrc } from "@tauri-apps/api/tauri";
 import { Menu, Transition, Dialog } from "@headlessui/react";
 import { motion } from "framer-motion";
+import { getClient, ResponseType } from '@tauri-apps/api/http';
 import {
   Command,
   Search,
@@ -40,7 +39,7 @@ const mockResults: SearchResultItem[] = [
   {
     id: 1,
     filename: "random.txt",
-    abspath: "/documents/random.txt",
+    abspath: "/Users/ashwa/Documents/random.txt",
     local: true,
     filecontent: "This is a sample document content...",
   },
@@ -113,69 +112,44 @@ const getFileType = (filename: string): string => {
 };
 
 const FilePreview = ({ file }: { file: SearchResultItem }) => {
-  const [content, setContent] = useState<string | null>(null);
+  const [content, setContent] = useState<any | null>(null);
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchContent = async () => {
-      if (!file.abspath) {
-        setError("No file path provided");
-        setLoading(false);
-        return;
-      }
+      const sanitizedPath = "/Documents/random.txt";
+      const fileType = getFileType(file.filename);
+      
+      console.log(file.filename);
 
-      try {
-        setLoading(true);
-        setError(null);
+      const client = await getClient();
 
-        const fileType = getFileType(file.filename);
-
-        if (fileType === "image") {
-          // For images, use Tauri's asset protocol for secure local file access
-          const assetUrl = convertFileSrc(file.abspath);
-          setContent(assetUrl);
-        } else {
-          // For text and code files, use readTextFile
-          const text = await readTextFile(file.abspath);
-          setContent(text);
-        }
-      } catch (err) {
-        console.error("File fetch error:", err);
-        setError(err instanceof Error ? err.message : "Failed to load file");
-      } finally {
-        setLoading(false);
+      if (fileType === "image") {
+        // Fetch binary content for images
+        const response = await client.get(`http://localhost:35438/Desktop/IMG_0776.png`, {
+          responseType: ResponseType.Binary,
+        });
+        console.log(response.data)
+        const blob = new Blob([response.data as any], { type: "image/png" });
+        const asset = URL.createObjectURL(blob);
+        console.log(asset)
+        setImageSrc(asset);
+      } else {
+        // Fetch text-based files
+        const response = await client.get(`http://localhost:35438/Documents/random.txt`, {
+          responseType: ResponseType.Text,
+        });
+        console.log(response.data)
+        setContent(response.data as any);
       }
     };
 
     fetchContent();
   }, [file]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full p-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
-      </div>
-    );
-  }
-
   if (error) {
-    return (
-      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 m-4">
-        <h3 className="text-red-800 dark:text-red-400 font-medium mb-2">
-          Failed to load file
-        </h3>
-        <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
-        <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-          <p>Debug information:</p>
-          <ul className="list-disc list-inside mt-2">
-            <li>File path: {file.abspath}</li>
-            <li>File type: {getFileType(file.filename)}</li>
-            <li>Local file: {file.local ? "Yes" : "No"}</li>
-          </ul>
-        </div>
-      </div>
-    );
+    return <div>Error loading file: {error}</div>;
   }
 
   const fileType = getFileType(file.filename);
@@ -184,13 +158,12 @@ const FilePreview = ({ file }: { file: SearchResultItem }) => {
     <div className="h-full overflow-auto p-4">
       {fileType === "image" ? (
         <div className="relative w-full h-full min-h-[300px]">
-          {content && (
+          {imageSrc && (
             <img
-              src={content}
+              src={imageSrc}
               alt={file.filename}
               className="object-contain w-full h-full"
               onError={(e) => {
-                setError("Failed to load image");
                 e.currentTarget.style.display = "none";
               }}
             />

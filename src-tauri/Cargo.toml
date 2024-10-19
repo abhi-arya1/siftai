@@ -36,6 +36,7 @@ tokio-util = "0.6"
 actix-web = "4.0"
 actix-files = { version = "0.6.0-beta.16" }
 base64 = "0.13"
+actix-cors = "0.6"
 thiserror = "1.0"
 
 
