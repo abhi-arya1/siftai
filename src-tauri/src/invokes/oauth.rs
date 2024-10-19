@@ -27,8 +27,7 @@ struct GitHubUserResponse {
 struct GitHubAccessTokenResponse {
     access_token: String,
     token_type: String,
-    scope: String,
-    user: GitHubUserResponse,
+    scope: String
 }
 
 
@@ -109,16 +108,43 @@ pub async fn github_oauth() -> Result<String, String> {
     // println!("response: {:?}", response);
 
     if response.status().is_success() {
-
-        println!("HERE");
         let token_response: GitHubAccessTokenResponse = response
             .json()
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| {
+                eprintln!("Failed to deserialize JSON: {:?}", e); // Print the deserialization error
+                e.to_string()
+            })?;
 
         // Store the token in the config
         cfg.github_token = token_response.access_token.clone();
-        cfg.github_username = token_response.user.login.clone();
+        
+        let user_res = client
+            .get("https://api.github.com/user")
+            .header("Accept", "application/vnd.github+json")
+            .header("Authorization", format!("Bearer {}", cfg.github_token))
+            .header("X-GitHub-Api-Version", "2022-11-28")
+            .header("User-Agent", "SiftAI-Rust-Client")
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if user_res.status().is_success() {
+            // Deserialize the JSON response to the GitHubUserResponse struct.
+            let user_data: GitHubUserResponse = user_res
+                .json()
+                .await
+                .map_err(|e| {
+                    eprintln!("Failed to deserialize User JSON: {:?}", e); // Print the deserialization error
+                    e.to_string()
+                })?;
+
+            cfg.github_username = user_data.login.clone();
+        } else {
+            eprintln!("Failed to get user data: {:?}", user_res);
+            let error_text = user_res.text().await.unwrap_or_else(|_| "No error text".to_string());
+            eprintln!("Error details: {}", error_text);
+        }
 
         println!("github token: {}, github_username: {}", cfg.github_token, cfg.github_username);
         util::write_config(cfg).unwrap();
