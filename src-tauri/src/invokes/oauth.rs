@@ -3,6 +3,7 @@ use reqwest::Client;
 use tokio::sync::mpsc;
 use warp::Filter;
 
+use crate::util;
 
 fn open_url(url: String) {
     match open::that(url) {
@@ -26,6 +27,12 @@ struct GitHubAccessTokenResponse {
 
 
 pub async fn github_oauth() -> Result<String, String> {
+
+    let mut cfg = util::read_config().unwrap();
+
+    if !cfg.github_token.is_empty() {
+        return Ok(cfg.github_token);
+    }
 
     let github_client_id = "Ov23liOMmuWUdFA35oZl";
     let github_client_secret = "50b43b1fab7fd17c4f3acf754268ddcddfa34fc5";
@@ -100,6 +107,10 @@ pub async fn github_oauth() -> Result<String, String> {
             .map_err(|e| e.to_string())?;
 
         // println!("Access Token: {}", token_response.access_token);
+
+        cfg.github_token = token_response.access_token.clone();
+        util::write_config(cfg).unwrap();
+        
         Ok(token_response.access_token)
     } else {
         Err("Error: Unable to get access token".to_string())

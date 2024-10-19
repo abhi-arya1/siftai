@@ -22,7 +22,9 @@ fn main() {
     let quit = CustomMenuItem::new("quit".to_string(), "Quit");
     let submenu = Submenu::new("File", Menu::new().add_item(quit));
 
-    let cfg_path = util::config_path();
+    let app_cfg = util::load_config().unwrap();
+
+    println!("Config: {:?}", app_cfg);
 
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![gh_oauth, run_subprocess])
