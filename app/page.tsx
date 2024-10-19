@@ -151,7 +151,7 @@ export default function FileExplorer() {
 
   async function handleGitHubLogin() {
     try {
-      const accessToken = await invoke('start_github_oauth');
+      const accessToken = await invoke('gh_oauth');
   
       setToken(accessToken as string);
       
