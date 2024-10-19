@@ -345,7 +345,7 @@ const FileTreeItem = ({ file, onFileSelect, selectedFile, level = 0 }) => {
     <div>
       <button
         className={cn(
-          "w-full text-left px-2 py-1 text-sm rounded flex items-center",
+          "w-full text-left px-2 py-1 text-sm rounded flex items-center transition-colors duration-150 ease-in-out",
           selectedFile?.id === file.id && "bg-gray-100 dark:bg-white/10",
           "hover:bg-gray-100 dark:hover:bg-white/10",
         )}
