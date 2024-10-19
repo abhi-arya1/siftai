@@ -1,6 +1,9 @@
 "use client";
 import React, { useState, useEffect, Fragment } from "react";
+import Image from "next/image";
+import sift_logo from "../src-tauri/icons/sift_logo.png";
 import { Menu, Transition, Dialog } from "@headlessui/react";
+import { motion } from "framer-motion";
 import {
   Command,
   Search,
@@ -21,21 +24,28 @@ import { Kbd } from "@nextui-org/kbd";
 import { cn } from "@/lib/utils";
 import { invoke } from "@tauri-apps/api/tauri";
 
-const mockFiles = [
+type SearchResultItem = {
+  id: number;
+  filename: string;
+  abspath: string;
+  local: boolean;
+  filecontent: string;
+};
+
+const mockResults: SearchResultItem[] = [
   {
     id: 1,
-    name: "documents",
-    type: "directory",
-    children: [
-      { id: 2, name: "report.pdf", type: "pdf" },
-      { id: 3, name: "notes.md", type: "markdown" },
-    ],
+    filename: "document.txt",
+    abspath: "/path/to/document.txt",
+    local: true,
+    filecontent: "This is a sample document content...",
   },
   {
-    id: 4,
-    name: "images",
-    type: "directory",
-    children: [{ id: 5, name: "photo.jpg", type: "image" }],
+    id: 2,
+    filename: "image.jpg",
+    abspath: "https://example.com/image.jpg",
+    local: false,
+    filecontent: "https://example.com/image.jpg",
   },
 ];
 
@@ -64,14 +74,49 @@ const IntegrationCard = ({ logo: Logo, name, isAuthenticated, onClick }) => {
   );
 };
 
+const fileTypeActions = {
+  txt: [
+    { id: "open", label: "Open", shortcut: "⌘O" },
+    { id: "edit", label: "Edit", shortcut: "⌘E" },
+    { id: "copy", label: "Copy", shortcut: "⌘C" },
+    { id: "delete", label: "Delete", shortcut: "⌘⌫" },
+  ],
+  jpg: [
+    { id: "view", label: "View", shortcut: "⌘V" },
+    { id: "download", label: "Download", shortcut: "⌘D" },
+    { id: "share", label: "Share", shortcut: "⌘S" },
+    { id: "delete", label: "Delete", shortcut: "⌘⌫" },
+  ],
+  py: [
+    { id: "run", label: "Run", shortcut: "⌘R" },
+    { id: "edit", label: "Edit", shortcut: "⌘E" },
+    { id: "debug", label: "Debug", shortcut: "⌘D" },
+    { id: "copy", label: "Copy", shortcut: "⌘C" },
+  ],
+  default: [
+    { id: "open", label: "Open", shortcut: "⌘O" },
+    { id: "copy", label: "Copy", shortcut: "⌘C" },
+    { id: "delete", label: "Delete", shortcut: "⌘⌫" },
+  ],
+};
+
 const FileExplorer = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [selectedResult, setSelectedResult] = useState<SearchResultItem | null>(
+    null,
+  );
   const [isIntegrationsDialogOpen, setIsIntegrationsDialogOpen] =
     useState(false);
   const [ghToken, setGhToken] = useState<string | null>(null);
   // const invoke = window.__TAURI__.invoke;
+
+  useEffect(() => {
+    if (mockResults.length > 0 && !selectedResult) {
+      setSelectedResult(mockResults[0]);
+    }
+  }, []);
 
   const handleGitHubOauth = async () => {
     invoke("gh_oauth")
@@ -86,19 +131,19 @@ const FileExplorer = () => {
   const [files, setFiles] = useState<string | null>(null); // Declare state to hold the files
 
   const getGitHubFiles = async (s: String) => {
-      try {
-          const result = await invoke("gh_find", { access_token: s }); // Ensure the correct parameter structure
-          console.log("Files retrieved:", result);
-          setFiles("hello"); // Update state with the result
-      } catch (error) {
-          console.error("Error fetching GitHub files:", error);
-          // Optionally handle the error here (e.g., set an error state)
-      }
+    try {
+      const result = await invoke("gh_find", { access_token: s }); // Ensure the correct parameter structure
+      console.log("Files retrieved:", result);
+      setFiles("hello"); // Update state with the result
+    } catch (error) {
+      console.error("Error fetching GitHub files:", error);
+      // Optionally handle the error here (e.g., set an error state)
+    }
   };
 
   const handleFetchFiles = () => {
-      const param = ""; // Set your parameter value here
-      getGitHubFiles(param);
+    const param = ""; // Set your parameter value here
+    getGitHubFiles(param);
   };
 
   const getFileActions = (fileType: any) => {
@@ -124,15 +169,6 @@ const FileExplorer = () => {
         []),
     ];
   };
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-
-    const handler = (e: MediaQueryListEvent) =>
-      setSystemTheme(e.matches ? "dark" : "light");
-    mediaQuery.addEventListener("change", handler);
-    return () => mediaQuery.removeEventListener("change", handler);
-  }, []);
 
   useEffect(() => {
     const handleKeyboard = (e: KeyboardEvent) => {
@@ -162,7 +198,7 @@ const FileExplorer = () => {
           <Menu.Button className="pl-2 rounded-lg hover:drop-shadow-xl focus:outline-none">
             <div className="flex items-center flex-row gap-x-0.75 p-1 rounded-md bg-white dark:bg-muted hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out">
               <Settings size={14} />
-              {/* <img src="sift_logo.png" alt="settings" className="w-5 h-5" /> */}
+              <Image src={sift_logo} alt="settings" className="w-5 h-5" />
             </div>
           </Menu.Button>
           <Transition
@@ -255,21 +291,97 @@ const FileExplorer = () => {
       <div className="flex-1 flex overflow-hidden">
         {/* File tree view */}
         <ScrollArea className="w-64 p-2">
-          <FileTree
-            files={mockFiles}
-            onFileSelect={setSelectedFile}
-            selectedFile={selectedFile}
-          />
+          <div className="space-y-2">
+            {mockResults.map((result) => (
+              <motion.div
+                key={result.id}
+                className={`p-3 rounded-lg cursor-pointer ${
+                  selectedResult?.id === result.id
+                    ? "bg-blue-100 dark:bg-blue-900"
+                    : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
+                onClick={() => setSelectedResult(result)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    {result.local ? (
+                      <svg
+                        className="w-6 h-6 text-gray-500 dark:text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-6 h-6 text-blue-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                        />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                      {result.filename}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                      {result.abspath}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </ScrollArea>
 
         {/* File preview area */}
         <div className="flex-1 p-4">
-          {selectedFile && (
-            <div className="text-sm">
-              <h2 className="font-medium">{selectedFile.name}</h2>
-              <p className="dark:text-zinc-400 text-zinc-600">
-                Type: {selectedFile.type}
-              </p>
+          {selectedResult ? (
+            <div>
+              <h2 className="text-xl font-bold mb-4">
+                {selectedResult.filename}
+              </h2>
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow mb-4">
+                <h3 className="text-lg font-semibold mb-2">
+                  Metadata and Details
+                </h3>
+                <p>
+                  <strong>Path:</strong> {selectedResult.abspath}
+                </p>
+                <p>
+                  <strong>Local File:</strong>{" "}
+                  {selectedResult.local ? "Yes" : "No"}
+                </p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+                <h3 className="text-lg font-semibold mb-2">File Content</h3>
+                <p className="whitespace-pre-wrap">
+                  {selectedResult.filecontent}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center text-gray-500 dark:text-gray-400">
+              <p>Select a result to view details</p>
             </div>
           )}
         </div>
@@ -294,10 +406,10 @@ const FileExplorer = () => {
               className="w-[280px] origin-bottom rounded-lg border p-1 text-sm items-center shadow-lg border border-gray-200 dark:border-white/5 focus:outline-none dark:bg-muted bg-white dark:text-white text-zinc-900"
             >
               <div className="px-3 py-2 text-xs font-medium opacity-50">
-                Actions for {selectedFile?.name}
+                Actions for {selectedResult?.filename || "selected file"}
               </div>
-              {selectedFile &&
-                getFileActions(selectedFile.type).map((action) => (
+              {selectedResult &&
+                getFileActions(selectedResult.type).map((action) => (
                   <Menu.Item key={action.id}>
                     {({ active }) => (
                       <button
@@ -338,12 +450,10 @@ const FileExplorer = () => {
         </div>
 
         {/* Search bar */}
-        <button onClick={handleFetchFiles}>
-          Hello World 
-          <div>
-            {files}
-          </div>
-        </button>
+        {/* <button onClick={handleFetchFiles}>
+          Hello World
+          <div>{files}</div>
+        </button> */}
         <div className="h-12 border-t flex px-1.5 items-center gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
