@@ -21,7 +21,7 @@ tauri = { version = "1.0.0", features = ["api-all"] }
 tokio = { version = "1", features = ["full"] }
 reqwest = { version = "0.11", features = ["json"] }
 dotenvy = "0.15"
-warp = "0.3"
+warp = { version = "0.3", features = ["tls"] }
 open = "5.0.0"
 ignore = "0.4"
 rayon = "1.5"

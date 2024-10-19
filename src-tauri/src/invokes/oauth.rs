@@ -3,6 +3,7 @@ use reqwest::Client;
 use tokio::sync::mpsc;
 use warp::Filter;
 use open;
+use std::env;
 
 use crate::util;
 
@@ -179,19 +180,20 @@ pub async fn slack_oauth() -> Result<String, String> {
 
     let mut cfg = util::read_config().unwrap();
 
+    // Return the token if it already exists
     if !cfg.slack_token.is_empty() {
         return Ok(cfg.slack_token);
     }
 
-    let (tx, mut rx) = mpsc::channel::<String>(1);
+    let (tx, mut rx) = tokio::sync::mpsc::channel::<String>(1);
 
-    let redirect_route = warp::path!("slack/oauth/callback")
+    // Define the redirect route to handle the callback
+    let redirect_route = warp::path!("slk_auth_callback")
         .and(warp::query::<std::collections::HashMap<String, String>>())
-        .and(warp::any().map(move || tx.clone()))
-        .and_then(|params: std::collections::HashMap<String, String>, 
-                  tx: mpsc::Sender<String>| async move {
+        .and(warp::any().map(move || tx.clone())) // Move tx into the warp handler
+        .and_then(|params: std::collections::HashMap<String, String>, tx: tokio::sync::mpsc::Sender<String>| async move {
             if let Some(code) = params.get("code") {
-                tx.send(code.clone())
+                tx.send(code.clone()) // Send the code to the main handler
                     .await
                     .map_err(|e| warp::reject::custom(OAuthError(e.to_string())))?;
                 Ok::<_, warp::Rejection>(warp::reply::html("Authorization successful! You can close this window."))
@@ -202,44 +204,58 @@ pub async fn slack_oauth() -> Result<String, String> {
 
     let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel();
     
-    let server = warp::serve(redirect_route);
-    let (_addr, server) = server.bind_with_graceful_shutdown(
+    // Start the Warp server with graceful shutdown
+    let server = warp::serve(redirect_route)
+        .tls()
+        .cert_path("./cert.pem")
+        .key_path("./key.pem");
+    let (_addr, server_fut) = server.bind_with_graceful_shutdown(
         ([127, 0, 0, 1], 35439),
         async {
             shutdown_rx.await.ok();
         },
     );
 
-    tokio::spawn(server);
+    // Spawn the Warp server
+    tokio::spawn(server_fut);
 
-    // Slack OAuth scopes - adjust these based on your bot's needs
-    let scopes = "app_mentions:read, channels:read, files:read, links:read, remote_files:read";
-    
+    // Define the OAuth scopes required by your Slack bot
+    let scopes = "app_mentions:read,channels:read,files:read,links:read,remote_files:read";
+
+    // Slack authorization URL with redirect_uri pointing to the Warp server
     let auth_url = format!(
-        "https://slack.com/oauth/v2/authorize?client_id={}&scope={}&redirect_uri=https://localhost:35439/slack/oauth/callback",
-        slack_client_id,
-        scopes
+        "https://slack.com/oauth/v2/authorize?client_id={}&scope={}&redirect_uri=https://localhost:35439/slk_auth_callback",
+        slack_client_id, scopes
     );
 
+    // Open the authorization URL in the browser
     open_url(auth_url);
 
-    // Wait for the authorization code from the local server
-    let slack_authorization_code = rx.recv()
-        .await
-        .ok_or("Failed to receive authorization code".to_string())?;
+    // Wait for the authorization code from the callback
+    let slack_authorization_code = match rx.recv().await {
+        Some(code) => {
+            println!("Received authorization code: {}", code);
+            code  // If the code is received successfully, continue.
+        },
+        None => {
+            let error_message = "Failed to receive authorization code".to_string();
+            eprintln!("Error: {}", error_message);
+            return Err(error_message);  // Log and return the error if no code is received.
+        }
+    };
 
-    // Shutdown the server after receiving the code
+    // Shutdown the Warp server after receiving the code
     let _ = shutdown_tx.send(());
 
-    // Exchange authorization code for an access token
-    let client = Client::new();
+    // Exchange the authorization code for an access token
+    let client = reqwest::Client::new();
     let token_url = "https://slack.com/api/oauth.v2.access";
-    
+
     let params = [
         ("client_id", slack_client_id),
         ("client_secret", slack_client_secret),
         ("code", slack_authorization_code.as_str()),
-        ("redirect_uri", "https://localhost:35439/slack/oauth/callback"),
+        ("redirect_uri", "http://localhost:35439/slk_auth_callback")
     ];
 
     let response = client
@@ -248,7 +264,10 @@ pub async fn slack_oauth() -> Result<String, String> {
         .form(&params)
         .send()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            eprintln!("Error occurred: {}", e.to_string());
+            e.to_string()
+        })?;
 
     if response.status().is_success() {
         let token_response: SlackAccessTokenResponse = response
@@ -259,12 +278,11 @@ pub async fn slack_oauth() -> Result<String, String> {
                 e.to_string()
             })?;
 
-        // Store the tokens in the config
+        // Store the access token in the configuration
         cfg.slack_token = token_response.access_token.clone();
+        util::write_config(cfg).unwrap();
 
         println!("Slack authentication successful!");
-        
-        util::write_config(cfg).unwrap();
 
         Ok(token_response.access_token)
     } else {

@@ -110,6 +110,7 @@ const FileExplorer = () => {
   const [isIntegrationsDialogOpen, setIsIntegrationsDialogOpen] =
     useState(false);
   const [ghToken, setGhToken] = useState<string | null>(null);
+  const [slackToken, setSlackToken] = useState<string | null>(null);
   // const invoke = window.__TAURI__.invoke;
 
   useEffect(() => {
@@ -125,6 +126,16 @@ const FileExplorer = () => {
       })
       .catch((err) => {
         setGhToken(err as string);
+      });
+  };
+
+  const handleSlackOauth = async () => {
+    invoke("slk_oauth")
+      .then((res) => {
+        setSlackToken(res as string);
+      })
+      .catch((err) => {
+        setSlackToken(err as string);
       });
   };
 
@@ -272,8 +283,8 @@ const FileExplorer = () => {
                 <IntegrationCard
                   logo={Slack}
                   name="Slack"
-                  isAuthenticated={!!ghToken}
-                  onClick={handleGitHubOauth}
+                  isAuthenticated={!!slackToken}
+                  onClick={handleSlackOauth}
                 />
                 {/* <IntegrationCard
                   logo={Discord}

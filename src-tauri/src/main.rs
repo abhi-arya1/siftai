@@ -67,7 +67,7 @@ async fn gh_find(token: &str) -> Result<String, String> {
 }
 
 #[tauri::command]
-async fn slack_find() -> Result<String, String> {
+async fn slk_oauth() -> Result<String, String> {
     invokes::slack_oauth().await
 }
 
@@ -88,7 +88,7 @@ fn main() {
     println!("Chroma database is configured.\n");
 
     println!("Parsing files in the background...");
-    files::parse_files();
+    // files::parse_files();
 
     println!("\nCompleted Startup Configurations\n");
 
@@ -115,7 +115,7 @@ fn main() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![gh_oauth, run_subprocess, gh_find, slack_find])
+        .invoke_handler(tauri::generate_handler![gh_oauth, run_subprocess, gh_find, slk_oauth])
         .menu(Menu::new().add_submenu(submenu))
         .on_window_event(move |event| {
             if let tauri::WindowEvent::CloseRequested { .. } = event.event() {

@@ -14,4 +14,4 @@
     - For example, if the abs path is `/Users/name/Documents/file.txt`, the path should be `/Documents/file.txt`
 
 - 35439 - Slack OAuth 
-  - New Slack Bot
+  - Run this by invoking `slk_oauth` from the Next.js frontend
