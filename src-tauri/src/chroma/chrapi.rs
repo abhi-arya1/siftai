@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::env;
 use std::error::Error;
 use std::process::Command;
 use std::str;
@@ -34,8 +35,16 @@ pub fn run_python_sdk(
 ) -> Result<Option<QueryResult>, Box<dyn Error>> {
     let sdkpath = "./pybindings/chroma_sdk.py";
     println!("Chroma Database at {}", db_path);
+
+    // Determine the appropriate Python command based on the OS
+    let python_cmd = if env::consts::OS == "windows" {
+        "python"
+    } else {
+        "python3"
+    };
+
     let output = match action {
-        Action::GetOrCreate { collection_name } => Command::new("python3")
+        Action::GetOrCreate { collection_name } => Command::new(python_cmd)
             .arg(sdkpath)
             .arg(db_path)
             .arg("get_or_create")
@@ -51,7 +60,7 @@ pub fn run_python_sdk(
             let ids_str = format!("{:?}", ids);
             let metadatas_str = format!("{:?}", metadatas);
 
-            Command::new("python3")
+            Command::new(python_cmd)
                 .arg(sdkpath)
                 .arg(db_path)
                 .arg("add")
@@ -65,7 +74,7 @@ pub fn run_python_sdk(
             collection_name,
             query_text,
             n_results,
-        } => Command::new("python3")
+        } => Command::new(python_cmd)
             .arg(sdkpath)
             .arg(db_path)
             .arg("query")
