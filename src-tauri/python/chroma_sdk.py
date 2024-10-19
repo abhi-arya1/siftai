@@ -1,28 +1,66 @@
 import chromadb
 from chromadb import Settings
-from chromadb.utils.embedding_functions import ollama_embedding_function
+from sys import argv 
 
 
-chroma_client = chromadb.Client(
-    settings=Settings(
-        is_persistent=True,
-        persist_directory="./getting_started"
-    )
+if len(argv) != 2:
+    print("Usage: python chroma_sdk.py <path> <action>")
+    exit(1)
+
+file = argv[0]
+db_path = argv[1]
+
+client = chromadb.PersistentClient(
+    path=db_path
 )
 
-collection = chroma_client.get_or_create_collection(name="DEV_COLLECTION", 
-    embedding_function=ollama_embedding_function)
 
-collection.add(
-    documents=[
-        "This is a document about pineapple",
-        "This is a document about oranges"
-    ],
-    ids=["id1", "id2"]
-)
+def get_or_create():
+    try:
+        client.get_or_create_collection(name=argv[3])
+        print('Success')
+    except Exception as e:
+        print(e)
 
-results = collection.query(
-    query_texts=["This is a query document about hawaii"], # Chroma will embed this for you
-    n_results=2 # how many results to return
-)
-print(results)
+
+def add():
+    try: 
+        coll_name = argv[3]
+        docs = eval(argv[4])
+        ids = eval(argv[5])
+
+        if len(argv) == 6:
+            metadata = None
+        else: 
+            metadata = eval(argv[6])
+
+        collection = client.get_or_create_collection(name=coll_name)
+        collection.add(documents=docs, ids=ids, metadatas=metadata)
+        print('Success')
+    except Exception as e:
+        print(e)
+
+
+def query_text():
+    try:
+        coll_name = argv[3]
+        query_text = argv[4]
+        n_results = int(argv[5])
+        collection = client.get_or_create_collection(name=coll_name)
+        results = collection.query(query_texts=[query_text], n_results=n_results)
+
+        print(results) 
+    except Exception as e:
+        print(e)
+    
+
+action = {
+    "get_or_create": get_or_create,
+    "add": add,
+    "query": query_text
+}
+
+
+if __name__ == "__main__":
+    action_id = argv[2]
+    action[action_id]()
