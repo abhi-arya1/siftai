@@ -1,7 +1,17 @@
 "use client";
 import React, { useState, useEffect, Fragment } from "react";
 import { Menu, Transition, Dialog } from "@headlessui/react";
-import { Command, Search, Settings, X } from "lucide-react";
+import {
+  Command,
+  Search,
+  Settings,
+  X,
+  Github,
+  Slack,
+  CheckIcon,
+  ArrowUpRight,
+  ArrowDown,
+} from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@nextui-org/kbd";
@@ -26,25 +36,40 @@ const mockFiles = [
   },
 ];
 
+const IntegrationCard = ({ logo: Logo, name, isAuthenticated, onClick }) => (
+  <div
+    className="w-full p-4 flex items-center justify-between rounded-lg dark:bg-muted hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out cursor-pointer"
+    onClick={onClick}
+  >
+    <div className="flex items-center gap-x-2">
+      <Logo className="text-black dark:text-white" />
+      <span className="dark:text-white">{name}</span>
+    </div>
+    {isAuthenticated ? (
+      <CheckIcon className="pl-2 text-green-500" />
+    ) : (
+      <ArrowUpRight className="pl-2 text-gray-500" />
+    )}
+  </div>
+);
+
 const FileExplorer = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isIntegrationsDialogOpen, setIsIntegrationsDialogOpen] =
     useState(false);
-
-  // Handle system theme changes
-  const [systemTheme, setSystemTheme] = useState<"light" | "dark">("dark");
-
-  const [ghToken, setGhToken] = useState("NONE");
+  const [ghToken, setGhToken] = useState<string | null>(null);
 
   const handleGitHubOauth = async () => {
-    invoke("gh_oauth").then((res) => {
-      setGhToken(res as string);
-    }).catch((err) => {
-      setGhToken(err as string);
-    });
-  }
+    invoke("gh_oauth")
+      .then((res) => {
+        setGhToken(res as string);
+      })
+      .catch((err) => {
+        setGhToken(err as string);
+      });
+  };
 
   const getFileActions = (fileType) => {
     const commonActions = [
@@ -70,7 +95,6 @@ const FileExplorer = () => {
   useEffect(() => {
     // Set initial theme
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    setSystemTheme(mediaQuery.matches ? "dark" : "light");
 
     // Listen for theme changes
     const handler = (e: MediaQueryListEvent) =>
@@ -106,10 +130,13 @@ const FileExplorer = () => {
   return (
     <div className="h-screen flex flex-col bg-white dark:bg-muted text-black dark:text-white">
       {/* SETTINGS MODAL */}
-      <div className="h-8 border-b border-zinc-700 flex justify-end items-center px-4">
+      <div className="h-8 border-b border-zinc-700 flex justify-end items-center px-2">
         <Menu>
-          <Menu.Button className="p-2 rounded-lg hover:drop-shadow-xl">
-            <Settings size={14} />
+          <Menu.Button className="pl-2 rounded-lg hover:drop-shadow-xl">
+            <div className="flex items-center flex-row gap-x-0.75 p-1 rounded-md bg-white bg-muted hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out">
+              <Settings size={14} />
+              <ArrowDown size={10} />
+            </div>
           </Menu.Button>
           <Transition
             as={Fragment}
@@ -120,7 +147,7 @@ const FileExplorer = () => {
             leaveFrom="transform opacity-100 scale-100"
             leaveTo="transform opacity-0 scale-95"
           >
-            <Menu.Items className="absolute right-0 mt-20 w-56 origin-top-right rounded-xl border border-gray-200 dark:border-white/5 bg-white dark:bg-muted p-1 text-sm/6 text-gray-800 dark:text-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+            <Menu.Items className="absolute right-2 mt-20 w-56 origin-top-right rounded-xl border border-gray-200 dark:border-white/5 bg-white dark:bg-muted p-1 text-sm/6 text-gray-800 dark:text-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
               <Menu.Item>
                 {({ active }) => (
                   <button
@@ -140,12 +167,12 @@ const FileExplorer = () => {
         <Dialog
           open={isIntegrationsDialogOpen}
           onClose={() => setIsIntegrationsDialogOpen(false)}
-          className="relative z-50"
+          className="relative z-50 transition-all duration-150 ease-in-out"
         >
           <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
 
-          <div className="fixed inset-0 flex items-center justify-center p-4">
-            <Dialog.Panel className="mx-auto max-w-sm rounded-xl bg-white dark:bg-muted p-6 shadow-xl">
+          <div className="fixed inset-0 flex items-center justify-center p-4 transition-all duration-150 ease-in-out">
+            <Dialog.Panel className="mx-auto rounded-xl w-[40%] bg-white dark:bg-muted p-6 shadow-xl transition-all duration-150 ease-in-out">
               <div className="flex justify-between items-center mb-4">
                 <Dialog.Title className="text-lg font-medium dark:text-white">
                   Integrations
@@ -158,28 +185,25 @@ const FileExplorer = () => {
                 </button>
               </div>
 
-              {/* Add your integration buttons here */}
               <div className="space-y-2">
-                <button className="w-full p-2 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white transition-colors"
+                <IntegrationCard
+                  logo={Github}
+                  name="GitHub"
+                  isAuthenticated={!!ghToken}
                   onClick={handleGitHubOauth}
-                >
-                  {ghToken}
-                </button>
-                <button className="w-full p-2 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white transition-colors">
-                  Slack Integration
-                </button>
-                <button className="w-full p-2 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white transition-colors">
-                  Google Drive Integration
-                </button>
-              </div>
-
-              <div className="mt-6">
-                <button
-                  onClick={() => setIsIntegrationsDialogOpen(false)}
-                  className="w-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-lg py-2 transition-colors"
-                >
-                  Close
-                </button>
+                />
+                <IntegrationCard
+                  logo={Slack}
+                  name="Slack"
+                  isAuthenticated={!!ghToken}
+                  onClick={handleGitHubOauth}
+                />
+                {/* <IntegrationCard
+                  logo={Discord}
+                  name="Discord"
+                  isAuthenticated={!!ghToken}
+                  onClick={handleGitHubOauth}
+                /> */}
               </div>
             </Dialog.Panel>
           </div>
@@ -189,7 +213,7 @@ const FileExplorer = () => {
       {/* Main content area */}
       <div className="flex-1 flex overflow-hidden">
         {/* File tree view */}
-        <ScrollArea className="w-64 border-r p-2 dark:border-muted-foreground border-zinc-200">
+        <ScrollArea className="w-64 p-2">
           <FileTree
             files={mockFiles}
             onFileSelect={setSelectedFile}
@@ -202,11 +226,7 @@ const FileExplorer = () => {
           {selectedFile && (
             <div className="text-sm">
               <h2 className="font-medium">{selectedFile.name}</h2>
-              <p
-                className={
-                  systemTheme === "dark" ? "text-zinc-400" : "text-zinc-600"
-                }
-              >
+              <p className="dark:text-zinc-400 text-zinc-600">
                 Type: {selectedFile.type}
               </p>
             </div>
@@ -215,12 +235,7 @@ const FileExplorer = () => {
       </div>
 
       {/* Bottom section */}
-      <div
-        className={cn(
-          "relative border-t",
-          systemTheme === "dark" ? "border-zinc-700" : "border-zinc-200",
-        )}
-      >
+      <div className="relative dark:border-muted-foreground">
         {/* Command Palette */}
         <Menu as="div" className="absolute right-4 bottom-full mb-2">
           <Transition
@@ -235,12 +250,7 @@ const FileExplorer = () => {
           >
             <Menu.Items
               static
-              className={cn(
-                "w-[280px] origin-bottom rounded-lg border p-1 text-sm shadow-lg focus:outline-none",
-                systemTheme === "dark"
-                  ? "bg-zinc-800 border-zinc-700 text-white"
-                  : "bg-white border-zinc-200 text-zinc-900",
-              )}
+              className="w-[280px] origin-bottom rounded-lg border p-1 text-sm items-center shadow-lg border border-gray-200 dark:border-white/5 focus:outline-none dark:bg-muted bg-white dark:text-white text-zinc-900"
             >
               <div className="px-3 py-2 text-xs font-medium opacity-50">
                 Actions for {selectedFile?.name}
@@ -250,20 +260,13 @@ const FileExplorer = () => {
                   <Menu.Item key={action.id}>
                     {({ active }) => (
                       <button
-                        className={`group flex w-full justify-between gap-2 rounded-lg py-1.5 px-3 ${
+                        className={`group flex w-full justify-between gap-2 items-center rounded-lg py-1.5 px-3 ${
                           active ? "bg-gray-100 dark:bg-white/10" : ""
                         } hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out`}
                         onClick={() => handleMenuAction(action.id)}
                       >
                         <span className="justify-start">{action.label}</span>
-                        <kbd
-                          className={cn(
-                            "px-1.5 py-0.5 text-[10px] font-medium rounded border",
-                            systemTheme === "dark"
-                              ? "bg-zinc-700 border-zinc-600 text-zinc-400"
-                              : "bg-zinc-100 border-zinc-200 text-zinc-500",
-                          )}
-                        >
+                        <kbd className="px-1.5 py-0.5 text-[10px] font-medium rounded border dark:bg-muted dark:border-muted-foreground dark:text-white bg-zinc-100 border-zinc-200 text-zinc-500">
                           {action.shortcut}
                         </kbd>
                       </button>
@@ -300,33 +303,18 @@ const FileExplorer = () => {
         </div> */}
 
         {/* Search bar */}
-        <div
-          className={cn(
-            "h-12 px-4 border-t flex items-center gap-2",
-            systemTheme === "dark" ? "border-zinc-700" : "border-zinc-200",
-          )}
-        >
+        <div className="h-12 border-t flex px-1.5 items-center gap-2">
           <div className="relative flex-1">
-            <Search
-              className={cn(
-                "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4",
-                systemTheme === "dark" ? "text-zinc-400" : "text-zinc-500",
-              )}
-            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
             <Input
               type="text"
               placeholder="Search files..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={cn(
-                "w-full pl-9",
-                systemTheme === "dark"
-                  ? "bg-zinc-800 border-zinc-700"
-                  : "bg-zinc-50 border-zinc-200",
-              )}
+              className="w-full pl-9 dark:bg-zinc-800 dark:border-zinc-700 bg-zinc-50 border-zinc-200 rounded-lg text-zinc-500 dark:text-zinc-400 focus:ring-0 focus:border-zinc-200 dark:focus:border-zinc-700"
             />
           </div>
-          <kbd className="px-1.5 py-0.5 text-[10px] font-medium rounded border dark:bg-zinc-800 bg-zinc-100 border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+          <kbd className="px-1.5 py-0.5 mr-1 text-[12px] font-medium rounded border dark:bg-zinc-800 bg-zinc-100 border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
             ⌘K
           </kbd>
         </div>
