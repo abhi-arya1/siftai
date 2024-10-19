@@ -8,10 +8,11 @@ use tauri::api::path::config_dir;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AppConfig {
     pub github_token: String,
+    pub github_username: String,
     pub notion_token: String,
     pub google_token: String,
     pub atlassian_token: String,
-    pub slack_token: String, 
+    pub slack_token: String,
 }
 
 pub fn db_path() -> PathBuf {
@@ -37,7 +38,6 @@ pub fn db_formatted_path() -> String {
     escaped_path
 }
 
-
 pub fn config_path() -> PathBuf {
     if let Some(mut cfg_pt) = config_dir() {
         cfg_pt = cfg_pt.join("sift.config.json");
@@ -48,7 +48,6 @@ pub fn config_path() -> PathBuf {
         PathBuf::new()
     }
 }
-
 
 pub fn write_config(cfg: AppConfig) -> Result<(), Box<dyn Error>> {
     let cfg_path = config_path();
@@ -61,7 +60,6 @@ pub fn write_config(cfg: AppConfig) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-
 pub fn read_config() -> Result<AppConfig, Box<dyn Error>> {
     let cfg_path = config_path();
     let file = File::open(cfg_path)?;
@@ -70,17 +68,17 @@ pub fn read_config() -> Result<AppConfig, Box<dyn Error>> {
     Ok(cfg)
 }
 
-
 pub fn load_config() -> Result<AppConfig, Box<dyn Error>> {
     let cfg_path = config_path();
 
     if !cfg_path.exists() {
         let default_cfg = AppConfig {
             github_token: "".to_string(),
+            github_username: "".to_string(),
             notion_token: "".to_string(),
             google_token: "".to_string(),
             atlassian_token: "".to_string(),
-            slack_token: "".to_string()
+            slack_token: "".to_string(),
         };
 
         write_config(default_cfg.clone())?;

@@ -3,7 +3,6 @@ use reqwest::Client;
 use tokio::sync::mpsc;
 use warp::Filter;
 use open;
-use std::env;
 
 use crate::util;
 
@@ -33,23 +32,9 @@ struct GitHubAccessTokenResponse {
 
 #[derive(Deserialize, Debug)]
 struct SlackAccessTokenResponse {
-    ok: bool,
-    access_token: String,
-    team: SlackTeam,
-    authed_user: SlackAuthedUser,
-}
-
-#[derive(Deserialize, Debug)]
-struct SlackTeam {
-    id: String,
-    name: String,
-}
-
-#[derive(Deserialize, Debug)]
-struct SlackAuthedUser {
-    id: String,
     access_token: String,
 }
+
 
 pub async fn github_oauth() -> Result<String, String> {
     let github_client_id = "Ov23liOMmuWUdFA35oZl";
@@ -72,7 +57,7 @@ pub async fn github_oauth() -> Result<String, String> {
                 tx.send(code.clone())
                     .await
                     .map_err(|e| warp::reject::custom(OAuthError(e.to_string())))?;
-                Ok::<_, warp::Rejection>(warp::reply::html("Authorization code received. You can close this window."))
+                Ok::<_, warp::Rejection>(warp::reply::html("Authorization successful! You can close this window."))
             } else {
                 Err(warp::reject::custom(OAuthError("No code parameter found".to_string())))
             }
@@ -158,7 +143,7 @@ pub async fn github_oauth() -> Result<String, String> {
                     e.to_string()
                 })?;
 
-            // cfg.github_username = user_data.login.clone();
+            cfg.github_username = user_data.login.clone();
         } else {
             eprintln!("Failed to get user data: {:?}", user_res);
             let error_text = user_res.text().await.unwrap_or_else(|_| "No error text".to_string());
@@ -173,6 +158,8 @@ pub async fn github_oauth() -> Result<String, String> {
         Err("Error: Unable to get access token".to_string())
     }
 }
+
+
 
 pub async fn slack_oauth() -> Result<String, String> {
     let slack_client_id = "7906164823108.7891603819943";
@@ -255,7 +242,7 @@ pub async fn slack_oauth() -> Result<String, String> {
         ("client_id", slack_client_id),
         ("client_secret", slack_client_secret),
         ("code", slack_authorization_code.as_str()),
-        ("redirect_uri", "http://localhost:35439/slk_auth_callback")
+        ("redirect_uri", "https://localhost:35439/slk_auth_callback")
     ];
 
     let response = client
@@ -270,6 +257,7 @@ pub async fn slack_oauth() -> Result<String, String> {
         })?;
 
     if response.status().is_success() {
+
         let token_response: SlackAccessTokenResponse = response
             .json()
             .await
@@ -278,7 +266,7 @@ pub async fn slack_oauth() -> Result<String, String> {
                 e.to_string()
             })?;
 
-        // Store the access token in the configuration
+        // // Store the access token in the configuration
         cfg.slack_token = token_response.access_token.clone();
         util::write_config(cfg).unwrap();
 
