@@ -5,6 +5,7 @@
 
 use tauri::{CustomMenuItem, Menu, Submenu};
 
+mod files;
 mod invokes;
 mod util;
 
@@ -23,6 +24,9 @@ fn main() {
     let submenu = Submenu::new("File", Menu::new().add_item(quit));
 
     let app_cfg = util::load_config().unwrap();
+    println!("HERE");
+    // files::parse_files();
+    println!("HERE2");
 
     println!("Config: {:?}", app_cfg);
 
