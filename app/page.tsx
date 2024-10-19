@@ -2,6 +2,8 @@
 import React, { useState, useEffect, Fragment } from "react";
 import Image from "next/image";
 // import sift_logo from "../src-tauri/icons/sift_logo.png";
+import { readTextFile, readBinaryFile } from "@tauri-apps/api/fs";
+import { convertFileSrc } from "@tauri-apps/api/tauri";
 import { Menu, Transition, Dialog } from "@headlessui/react";
 import { motion } from "framer-motion";
 import {
@@ -16,7 +18,9 @@ import {
   MoveUpRight,
   Zap,
   XIcon,
-  Images,
+  Code,
+  FileText,
+  ImageIcon,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
@@ -35,8 +39,8 @@ type SearchResultItem = {
 const mockResults: SearchResultItem[] = [
   {
     id: 1,
-    filename: "document.txt",
-    abspath: "/path/to/document.txt",
+    filename: "random.txt",
+    abspath: "/documents/random.txt",
     local: true,
     filecontent: "This is a sample document content...",
   },
@@ -98,6 +102,111 @@ const fileTypeActions = {
     { id: "copy", label: "Copy", shortcut: "⌘C" },
     { id: "delete", label: "Delete", shortcut: "⌘⌫" },
   ],
+};
+
+const getFileType = (filename: string): string => {
+  const ext = filename.split(".").pop()?.toLowerCase() || "";
+  if (["jpg", "jpeg", "png", "gif", "svg"].includes(ext)) return "image";
+  if (["js", "ts", "py", "java", "cpp", "html", "css"].includes(ext))
+    return "code";
+  return "text";
+};
+
+const FilePreview = ({ file }: { file: SearchResultItem }) => {
+  const [content, setContent] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchContent = async () => {
+      if (!file.abspath) {
+        setError("No file path provided");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const fileType = getFileType(file.filename);
+
+        if (fileType === "image") {
+          // For images, use Tauri's asset protocol for secure local file access
+          const assetUrl = convertFileSrc(file.abspath);
+          setContent(assetUrl);
+        } else {
+          // For text and code files, use readTextFile
+          const text = await readTextFile(file.abspath);
+          setContent(text);
+        }
+      } catch (err) {
+        console.error("File fetch error:", err);
+        setError(err instanceof Error ? err.message : "Failed to load file");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContent();
+  }, [file]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full p-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 m-4">
+        <h3 className="text-red-800 dark:text-red-400 font-medium mb-2">
+          Failed to load file
+        </h3>
+        <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
+        <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+          <p>Debug information:</p>
+          <ul className="list-disc list-inside mt-2">
+            <li>File path: {file.abspath}</li>
+            <li>File type: {getFileType(file.filename)}</li>
+            <li>Local file: {file.local ? "Yes" : "No"}</li>
+          </ul>
+        </div>
+      </div>
+    );
+  }
+
+  const fileType = getFileType(file.filename);
+
+  return (
+    <div className="h-full overflow-auto p-4">
+      {fileType === "image" ? (
+        <div className="relative w-full h-full min-h-[300px]">
+          {content && (
+            <img
+              src={content}
+              alt={file.filename}
+              className="object-contain w-full h-full"
+              onError={(e) => {
+                setError("Failed to load image");
+                e.currentTarget.style.display = "none";
+              }}
+            />
+          )}
+        </div>
+      ) : fileType === "code" ? (
+        <pre className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg overflow-auto">
+          <code className="text-sm font-mono">{content}</code>
+        </pre>
+      ) : (
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg whitespace-pre-wrap">
+          {content}
+        </div>
+      )}
+    </div>
+  );
 };
 
 const FileExplorer = () => {
@@ -209,7 +318,7 @@ const FileExplorer = () => {
           <Menu.Button className="pl-2 rounded-lg hover:drop-shadow-xl focus:outline-none">
             <div className="flex items-center flex-row gap-x-0.75 p-1 rounded-md bg-white dark:bg-muted hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out">
               <Settings size={14} />
-              { /* <Image src={sift_logo} alt="settings" className="w-5 h-5" /> */ } 
+              {/* <Image src={sift_logo} alt="settings" className="w-5 h-5" /> */}
             </div>
           </Menu.Button>
           <Transition
@@ -304,50 +413,23 @@ const FileExplorer = () => {
         <ScrollArea className="w-64 p-2">
           <div className="space-y-2">
             {mockResults.map((result) => (
-              <motion.div
+              <div
                 key={result.id}
                 className={`p-3 rounded-lg cursor-pointer ${
                   selectedResult?.id === result.id
-                    ? "bg-blue-100 dark:bg-blue-900"
+                    ? "bg-orange-300 dark:bg-orange-400"
                     : "hover:bg-gray-100 dark:hover:bg-gray-800"
-                }`}
+                } transition-colors duration-150 ease-in-out`}
                 onClick={() => setSelectedResult(result)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
               >
                 <div className="flex items-center space-x-3">
                   <div className="flex-shrink-0">
-                    {result.local ? (
-                      <svg
-                        className="w-6 h-6 text-gray-500 dark:text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        />
-                      </svg>
+                    {getFileType(result.filename) === "image" ? (
+                      <ImageIcon className="w-5 h-5 text-purple-500" />
+                    ) : getFileType(result.filename) === "code" ? (
+                      <Code className="w-5 h-5 text-blue-500" />
                     ) : (
-                      <svg
-                        className="w-6 h-6 text-blue-500"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                        />
-                      </svg>
+                      <FileText className="w-5 h-5 text-gray-500" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -359,40 +441,36 @@ const FileExplorer = () => {
                     </p>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
         </ScrollArea>
 
         {/* File preview area */}
-        <div className="flex-1 p-4">
+        <div className="flex-1 p-4 overflow-hidden flex flex-col">
           {selectedResult ? (
-            <div>
-              <h2 className="text-xl font-bold mb-4">
-                {selectedResult.filename}
-              </h2>
-              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow mb-4">
-                <h3 className="text-lg font-semibold mb-2">
-                  Metadata and Details
-                </h3>
-                <p>
-                  <strong>Path:</strong> {selectedResult.abspath}
-                </p>
-                <p>
-                  <strong>Local File:</strong>{" "}
-                  {selectedResult.local ? "Yes" : "No"}
-                </p>
+            <>
+              <div className="mb-4">
+                <h2 className="text-xl font-bold mb-2">
+                  {selectedResult.filename}
+                </h2>
+                <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    <strong>Path:</strong> {selectedResult.abspath}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    <strong>Type:</strong>{" "}
+                    {getFileType(selectedResult.filename)}
+                  </p>
+                </div>
               </div>
-              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-2">File Content</h3>
-                <p className="whitespace-pre-wrap">
-                  {selectedResult.filecontent}
-                </p>
+              <div className="flex-1 overflow-hidden bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                <FilePreview file={selectedResult} />
               </div>
-            </div>
+            </>
           ) : (
-            <div className="text-center text-gray-500 dark:text-gray-400">
-              <p>Select a result to view details</p>
+            <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+              <p>Select a file to view details</p>
             </div>
           )}
         </div>
@@ -478,64 +556,6 @@ const FileExplorer = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
-};
-
-const FileTree = ({ files, onFileSelect, selectedFile }) => {
-  return (
-    <div className="space-y-1">
-      {files.map((file) => (
-        <FileTreeItem
-          key={file.id}
-          file={file}
-          onFileSelect={onFileSelect}
-          selectedFile={selectedFile}
-        />
-      ))}
-    </div>
-  );
-};
-
-// FileTreeItem component
-const FileTreeItem = ({ file, onFileSelect, selectedFile, level = 0 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  return (
-    <div>
-      <button
-        className={cn(
-          "w-full text-left px-2 py-1 text-sm rounded flex items-center transition-colors duration-150 ease-in-out",
-          selectedFile?.id === file.id && "bg-gray-100 dark:bg-white/10",
-          "hover:bg-gray-100 dark:hover:bg-white/10",
-        )}
-        style={{ paddingLeft: `${level * 12 + 8}px` }}
-        onClick={() => {
-          onFileSelect(file);
-          if (file.type === "directory") {
-            setIsExpanded(!isExpanded);
-          }
-        }}
-      >
-        {file.type === "directory" && (
-          <span className="mr-2">{isExpanded ? "▾" : "▸"}</span>
-        )}
-        {file.name}
-      </button>
-
-      {isExpanded && file.children && (
-        <div>
-          {file.children.map((child) => (
-            <FileTreeItem
-              key={child.id}
-              file={child}
-              onFileSelect={onFileSelect}
-              selectedFile={selectedFile}
-              level={level + 1}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 };

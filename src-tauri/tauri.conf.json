@@ -12,6 +12,17 @@
   },
   "tauri": {
     "allowlist": {
+      "fs": {
+        "all": true,
+        "readFile": true,
+        "readDir": true,
+        "scope": ["**"]
+      },
+      "http": {
+        "all": true,
+        "request": true,
+        "scope": ["http://localhost:35438/*"]
+      },
       "all": true,
       "protocol": {
         "asset": true,
