@@ -5,6 +5,12 @@
       "driver": "SQLite",
       "database": "${workspaceFolder:src-tauri}/python/getting_started/chroma.sqlite3",
       "name": "TEST2"
+    },
+    {
+      "previewLimit": 50,
+      "driver": "SQLite",
+      "database": "/Users/ashwa/Library/Application Support/sift_datastore/chroma.sqlite3",
+      "name": "TEST3"
     }
   ],
   "sqltools.useNodeRuntime": true

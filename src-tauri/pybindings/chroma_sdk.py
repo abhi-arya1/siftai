@@ -17,8 +17,8 @@ client = chromadb.PersistentClient(
 
 def get_or_create():
     try:
-        client.get_or_create_collection(name=argv[3])
-        print("{ \"status\": \"Success\" }")
+        collection = client.get_or_create_collection(name=argv[3])
+        print("{ \"status\": \"Success: " + str(collection) + "\" }")
     except Exception as e:
         print("{ \"status\": \"Failed with error: " + str(e) + "\" }")
 
@@ -36,7 +36,7 @@ def add():
 
         collection = client.get_or_create_collection(name=coll_name)
         collection.add(documents=docs, ids=ids, metadatas=metadata)
-        print("{ \"status\": \"Success\" }")
+        print("{ \"status\": \"Success: " + str(collection) + "\" }")
     except Exception as e:
         print("{ \"status\": \"Failed with error: " + str(e) + "\" }")
 

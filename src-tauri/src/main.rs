@@ -10,12 +10,13 @@ use tokio::signal;
 use util::db_formatted_path;
 
 mod apis;
+mod chroma;
 mod files;
 mod invokes;
 mod util;
 
 fn start_chroma_server(command: &str) -> Arc<Mutex<std::process::Child>> {
-    let mut chroma = if cfg!(target_os = "windows") {
+    let chrdb = if cfg!(target_os = "windows") {
         Arc::new(Mutex::new(
             Command::new("cmd")
                 .args(&["/C", command]) // Use "/C" for cmd.exe to run a command
@@ -36,8 +37,17 @@ fn start_chroma_server(command: &str) -> Arc<Mutex<std::process::Child>> {
         ))
     };
 
-    let chroma_clone = Arc::clone(&chroma);
-    chroma
+    let _ = Arc::clone(&chrdb);
+    chrdb
+}
+
+fn start_chroma_db() {
+    chroma::run_python_sdk(
+        &db_formatted_path().as_str(),
+        &chroma::Action::GetOrCreate {
+            collection_name: "siftfiles".to_string(),
+        },
+    ).expect("Failed to create Chroma database collection");
 }
 
 #[tauri::command]
@@ -65,8 +75,12 @@ fn main() {
     let command = format!("chroma run --path {} --port 35436", db_formatted_path());
     let chroma_clone = start_chroma_server(&command);
 
-    println!("Chroma server is running in the background.");
+    println!("Chroma server is running in the background on http://localhost:35436.\n");
     println!("AppConfig: {:?}", app_cfg);
+
+    start_chroma_db();
+    println!("Chroma database is configured.\n");
+
     println!("\nCompleted Startup Configurations\n");
 
     tauri::Builder::default()
