@@ -12,6 +12,7 @@ import {
   ArrowUpRight,
   ArrowDown,
   MoveUpRight,
+  Zap,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
@@ -42,7 +43,7 @@ const IntegrationCard = ({ logo: Logo, name, isAuthenticated, onClick }) => {
 
   return (
     <div
-      className="w-full p-4 flex items-center justify-between rounded-lg dark:bg-muted hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out cursor-pointer"
+      className="w-[50%] p-3 flex flex-grid rounded-lg dark:bg-muted hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out cursor-pointer"
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -54,9 +55,9 @@ const IntegrationCard = ({ logo: Logo, name, isAuthenticated, onClick }) => {
       {isAuthenticated ? (
         <CheckIcon className="pl-2 text-green-500" />
       ) : isHovered ? (
-        <MoveUpRight className="pl-2 text-gray-500 transition-all duration-300 hover:scale-110 ease-in-out" />
+        <MoveUpRight className="pl-1 ml-auto text-gray-500 transition-all duration-300 hover:scale-110 ease-in-out" />
       ) : (
-        <ArrowUpRight className="pl-2 text-gray-500 transition-all duration-300 hover:scale-110 ease-in-out" />
+        <ArrowUpRight className="pl-1 ml-auto text-gray-500 transition-all duration-300 hover:scale-110 ease-in-out" />
       )}
     </div>
   );
@@ -80,10 +81,10 @@ const FileExplorer = () => {
       });
   };
 
-  const getFileActions = (fileType) => {
+  const getFileActions = (fileType: any) => {
     const commonActions = [
-      { id: "copy", label: "Copy", shortcut: "⌘C" },
-      { id: "delete", label: "Delete", shortcut: "⌘⌫" },
+      { id: "copy", label: "Copy", shortcut: "⌘ C" },
+      { id: "delete", label: "Delete", shortcut: "⌘ ⌫" },
     ];
 
     const typeSpecificActions = {
@@ -95,29 +96,29 @@ const FileExplorer = () => {
         { id: "preview", label: "Toggle Preview", shortcut: "⌘P" },
         { id: "export", label: "Export as PDF", shortcut: "⌘⇧E" },
       ],
-      // Add more file type specific actions
     };
 
-    return [...commonActions, ...(typeSpecificActions[fileType] || [])];
+    return [
+      ...commonActions,
+      ...(typeSpecificActions[fileType as keyof typeof typeSpecificActions] ||
+        []),
+    ];
   };
 
   useEffect(() => {
-    // Set initial theme
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
-    // Listen for theme changes
     const handler = (e: MediaQueryListEvent) =>
       setSystemTheme(e.matches ? "dark" : "light");
     mediaQuery.addEventListener("change", handler);
     return () => mediaQuery.removeEventListener("change", handler);
   }, []);
 
-  // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyboard = (e: KeyboardEvent) => {
       if (e.metaKey && e.key === "k") {
         e.preventDefault();
-        setIsCommandPaletteOpen((prev) => !prev); // Toggle menu
+        setIsCommandPaletteOpen((prev) => !prev);
       }
       if (e.key === "Escape") {
         setIsCommandPaletteOpen(false);
@@ -128,11 +129,8 @@ const FileExplorer = () => {
     return () => window.removeEventListener("keydown", handleKeyboard);
   }, []);
 
-  // Handle menu option selection
   const handleMenuAction = (action: string) => {
-    // Handle the action
     console.log(`Executing action: ${action}`);
-    // Close the menu
     setIsCommandPaletteOpen(false);
   };
 
@@ -165,6 +163,7 @@ const FileExplorer = () => {
                     onClick={() => setIsIntegrationsDialogOpen(true)}
                   >
                     Integrations
+                    <Zap size={16} className="ml-auto text-yellow-400" />
                   </button>
                 )}
               </Menu.Item>
@@ -268,13 +267,13 @@ const FileExplorer = () => {
                   <Menu.Item key={action.id}>
                     {({ active }) => (
                       <button
-                        className={`group flex w-full justify-between gap-2 items-center rounded-lg py-1.5 px-3 ${
+                        className={`tracking-wide group flex w-full justify-between gap-2 items-center rounded-lg py-1.5 px-3 ${
                           active ? "bg-gray-100 dark:bg-white/10" : ""
                         } hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out`}
                         onClick={() => handleMenuAction(action.id)}
                       >
                         <span className="justify-start">{action.label}</span>
-                        <kbd className="px-1.5 py-0.5 text-[10px] font-medium rounded border dark:bg-muted dark:border-muted-foreground dark:text-white bg-zinc-100 border-zinc-200 text-zinc-500">
+                        <kbd className="px-1.5 py-0.5 text-[12px] font-medium rounded border dark:bg-muted dark:border-muted-foreground dark:text-white bg-zinc-100 border-zinc-200 text-zinc-500">
                           {action.shortcut}
                         </kbd>
                       </button>
@@ -286,29 +285,16 @@ const FileExplorer = () => {
         </Menu>
 
         {/* Action shortcuts bar */}
-        {/* <div className="h-8 px-4 flex items-center space-x-4 text-xs">
-          {["Open", "Copy", "Delete"].map((action, i) => (
-            <span key={action} className="flex items-center gap-2">
-              <kbd
-                className={cn(
-                  "px-1.5 py-0.5 text-[10px] font-medium rounded border",
-                  systemTheme === "dark"
-                    ? "bg-zinc-800 border-zinc-700 text-zinc-400"
-                    : "bg-zinc-100 border-zinc-200 text-zinc-500",
-                )}
-              >
-                {["⌘↵", "⌘C", "⌘⌫"][i]}
+        <div className="h-8 px-4 flex items-center justify-end space-x-4 text-xs">
+          {["Actions"].map((action, i) => (
+            <span key={action} className="flex items-center justify-end gap-2">
+              <span className="dark:text-zinc-400 text-zinc-600">{action}</span>
+              <kbd className="px-1.5 py-0.5 text-[12px] font-medium rounded border dark:bg-muted dark:border-muted-foreground dark:text-white text-zinc-400">
+                {["⌘ K"][i]}
               </kbd>
-              <span
-                className={
-                  systemTheme === "dark" ? "text-zinc-400" : "text-zinc-600"
-                }
-              >
-                {action}
-              </span>
             </span>
           ))}
-        </div> */}
+        </div>
 
         {/* Search bar */}
         <div className="h-12 border-t flex px-1.5 items-center gap-2">
@@ -322,9 +308,6 @@ const FileExplorer = () => {
               className="w-full pl-9 dark:bg-zinc-800 dark:border-zinc-700 bg-zinc-50 border-zinc-200 rounded-lg text-zinc-500 dark:text-zinc-400 focus:ring-0 focus:border-zinc-200 dark:focus:border-zinc-700"
             />
           </div>
-          <kbd className="px-1.5 py-0.5 mr-1 text-[12px] font-medium rounded border dark:bg-zinc-800 bg-zinc-100 border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-            ⌘K
-          </kbd>
         </div>
       </div>
     </div>
