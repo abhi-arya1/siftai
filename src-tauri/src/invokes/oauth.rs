@@ -2,8 +2,6 @@ use serde::Deserialize;
 use reqwest::Client;
 use tokio::sync::mpsc;
 use warp::Filter;
-use warp::reply::html;
-use warp::http::Uri;
 use open;
 
 use crate::util;
@@ -21,25 +19,32 @@ struct OAuthError(String);
 impl warp::reject::Reject for OAuthError {}
 
 #[derive(Deserialize, Debug)]
+struct GitHubUserResponse {
+    login: String,
+}
+
+#[derive(Deserialize, Debug)]
 struct GitHubAccessTokenResponse {
     access_token: String,
     token_type: String,
     scope: String,
+    user: GitHubUserResponse,
 }
 
+
 pub async fn github_oauth() -> Result<String, String> {
+
+    let github_client_id = "Ov23liOMmuWUdFA35oZl";
+    let github_client_secret = "50b43b1fab7fd17c4f3acf754268ddcddfa34fc5";
+
     let mut cfg = util::read_config().unwrap();
 
     if !cfg.github_token.is_empty() {
         return Ok(cfg.github_token);
     }
 
-    let github_client_id = "Ov23liOMmuWUdFA35oZl";
-    let github_client_secret = "50b43b1fab7fd17c4f3acf754268ddcddfa34fc5";
-
     let (tx, mut rx) = mpsc::channel::<String>(1);
 
-    // Route to handle the GitHub OAuth callback and extract the code
     let redirect_route = warp::path!("gh_auth_callback")
         .and(warp::query::<std::collections::HashMap<String, String>>())
         .and(warp::any().map(move || tx.clone()))
@@ -49,33 +54,15 @@ pub async fn github_oauth() -> Result<String, String> {
                 tx.send(code.clone())
                     .await
                     .map_err(|e| warp::reject::custom(OAuthError(e.to_string())))?;
-                // Redirect to close the browser tab
-                Ok::<_, warp::Rejection>(warp::redirect::see_other(Uri::from_static("/close")))
+                Ok::<_, warp::Rejection>(warp::reply::html("Authorization code received. You can close this window."))
             } else {
                 Err(warp::reject::custom(OAuthError("No code parameter found".to_string())))
             }
         });
 
-    // Route to serve the "window.close()" script to close the browser tab
-    let close_tab_route = warp::path!("close")
-        .map(|| {
-            html(
-                r#"
-                    <script>
-                        window.close();
-                    </script>
-                    <p>If this window does not close automatically, you may close it manually.</p>
-                "#,
-            )
-        });
-
-    // Combine both routes
-    let routes = redirect_route.or(close_tab_route);
-
     let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel();
-
-    // Start the server
-    let server = warp::serve(routes);
+    
+    let server = warp::serve(redirect_route);
     let (_addr, server) = server.bind_with_graceful_shutdown(
         ([127, 0, 0, 1], 35435),
         async {
@@ -85,11 +72,12 @@ pub async fn github_oauth() -> Result<String, String> {
 
     tokio::spawn(server);
 
-    // Step 1: Open the authorization URL in the user's browser
     let auth_url = format!(
-        "https://github.com/login/oauth/authorize?client_id={}&scope=repo,user&redirect_uri=http://localhost:34565/gh_auth_callback",
+        "https://github.com/login/oauth/authorize?client_id={}&scope=repo,user&redirect_uri=http://localhost:35435/gh_auth_callback",
         github_client_id
     );
+
+    // println!("Open this URL in your browser: {}", auth_url);
 
     open_url(auth_url);
 
@@ -98,7 +86,10 @@ pub async fn github_oauth() -> Result<String, String> {
         .await
         .ok_or("Failed to receive authorization code".to_string())?;
 
-    // Step 3: Exchange the authorization code for an access token
+    // Shutdown the server after receiving the code
+    let _ = shutdown_tx.send(());
+
+    // Step 3: Exchange authorization code for an access token
     let client = Client::new();
     let token_url = "https://github.com/login/oauth/access_token";
     let params = [
@@ -115,7 +106,11 @@ pub async fn github_oauth() -> Result<String, String> {
         .await
         .map_err(|e| e.to_string())?;
 
+    // println!("response: {:?}", response);
+
     if response.status().is_success() {
+
+        println!("HERE");
         let token_response: GitHubAccessTokenResponse = response
             .json()
             .await
@@ -123,11 +118,10 @@ pub async fn github_oauth() -> Result<String, String> {
 
         // Store the token in the config
         cfg.github_token = token_response.access_token.clone();
-        util::write_config(cfg).unwrap();
+        cfg.github_username = token_response.user.login.clone();
 
-        // Shutdown the server after 2 seconds to ensure the browser can reach /close
-        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
-        let _ = shutdown_tx.send(());
+        println!("github token: {}, github_username: {}", cfg.github_token, cfg.github_username);
+        util::write_config(cfg).unwrap();
 
         Ok(token_response.access_token)
     } else {

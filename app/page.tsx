@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, Fragment } from "react";
 import Image from "next/image";
-import sift_logo from "../src-tauri/icons/sift_logo.png";
+// import sift_logo from "../src-tauri/icons/sift_logo.png";
 import { Menu, Transition, Dialog } from "@headlessui/react";
 import { motion } from "framer-motion";
 import {
@@ -198,7 +198,7 @@ const FileExplorer = () => {
           <Menu.Button className="pl-2 rounded-lg hover:drop-shadow-xl focus:outline-none">
             <div className="flex items-center flex-row gap-x-0.75 p-1 rounded-md bg-white dark:bg-muted hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out">
               <Settings size={14} />
-              <Image src={sift_logo} alt="settings" className="w-5 h-5" />
+              { /* <Image src={sift_logo} alt="settings" className="w-5 h-5" /> */ } 
             </div>
           </Menu.Button>
           <Transition
