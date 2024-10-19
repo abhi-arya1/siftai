@@ -6,7 +6,7 @@
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
 use tauri::{CustomMenuItem, Menu, Submenu};
-use util::{db_formatted_path, db_path};
+use util::db_formatted_path;
 
 mod files;
 mod invokes;
