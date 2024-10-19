@@ -372,24 +372,24 @@ pub async fn notion_oauth() -> Result<String, String> {
         })?;
 
     if response.status().is_success() {
-        println!("response: {:?}", response.text().await.unwrap());
+        // println!("response: {:?}", response.text().await.unwrap());
 
-        // let token_response: SlackAccessTokenResponse = response
-        //     .json()
-        //     .await
-        //     .map_err(|e| {
-        //         eprintln!("Failed to deserialize JSON: {:?}", e);
-        //         e.to_string()
-        //     })?;
+        let token_response: SlackAccessTokenResponse = response
+            .json()
+            .await
+            .map_err(|e| {
+                eprintln!("Failed to deserialize JSON: {:?}", e);
+                e.to_string()
+            })?;
 
-        // // // Store the access token in the configuration
-        // cfg.slack_token = token_response.access_token.clone();
-        // util::write_config(cfg).unwrap();
+        // // Store the access token in the configuration
+        cfg.notion_token = token_response.access_token.clone();
+        util::write_config(cfg).unwrap();
 
-        // println!("Slack authentication successful!");
+        println!("Notion authentication successful!");
 
-        // Ok(token_response.access_token)
-        Ok("test".to_string())
+        Ok(token_response.access_token)
+        // Ok("test".to_string())
     } else {
         let error_text = response.text().await.unwrap_or_else(|_| "No error text".to_string());
         Err(format!("Error: Unable to get access token. {}", error_text))
