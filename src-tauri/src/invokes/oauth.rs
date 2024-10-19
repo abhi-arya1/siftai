@@ -3,6 +3,7 @@ use reqwest::Client;
 use tokio::sync::mpsc;
 use warp::Filter;
 use open;
+use base64::encode;
 
 use crate::util;
 
@@ -273,6 +274,125 @@ pub async fn slack_oauth() -> Result<String, String> {
         println!("Slack authentication successful!");
 
         Ok(token_response.access_token)
+    } else {
+        let error_text = response.text().await.unwrap_or_else(|_| "No error text".to_string());
+        Err(format!("Error: Unable to get access token. {}", error_text))
+    }
+}
+
+
+
+pub async fn notion_oauth() -> Result<String, String> {
+    let notion_client_id = "124d872b-594c-801e-bef4-00371de7fd49";
+    let notion_secret = "secret_Vit6gcfLRaypAQcouQTHiLQfwaiuEznHw9nyFt820NP";
+
+    let mut cfg = util::read_config().unwrap();
+
+    // Return the token if it already exists
+    if !cfg.notion_token.is_empty() {
+        return Ok(cfg.notion_token);
+    }
+
+    let (tx, mut rx) = tokio::sync::mpsc::channel::<String>(1);
+
+    // Define the redirect route to handle the callback
+    let redirect_route = warp::path!("ntn_auth_callback")
+        .and(warp::query::<std::collections::HashMap<String, String>>())
+        .and(warp::any().map(move || tx.clone())) // Move tx into the warp handler
+        .and_then(|params: std::collections::HashMap<String, String>, tx: tokio::sync::mpsc::Sender<String>| async move {
+            if let Some(code) = params.get("code") {
+                println!("Received code: {}", code);
+                tx.send(code.clone()) // Send the code to the main handler
+                    .await
+                    .map_err(|e| warp::reject::custom(OAuthError(e.to_string())))?;
+                Ok::<_, warp::Rejection>(warp::reply::html("Authorization successful! You can close this window."))
+            } else {
+                Err(warp::reject::custom(OAuthError("No code parameter found".to_string())))
+            }
+        });
+
+    let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel();
+    
+    // Start the Warp server with graceful shutdown
+    let server = warp::serve(redirect_route);
+    let (_addr, server_fut) = server.bind_with_graceful_shutdown(
+        ([127, 0, 0, 1], 35440),
+        async {
+            shutdown_rx.await.ok();
+        },
+    );
+
+    // Spawn the Warp server
+    tokio::spawn(server_fut);
+
+    // Notion authorization URL with redirect_uri pointing to the Warp server
+    let auth_url = format!(
+        "https://api.notion.com/v1/oauth/authorize?client_id=124d872b-594c-801e-bef4-00371de7fd49&response_type=code&owner=user&redirect_uri=http%3A%2F%2Flocalhost%3A35440%2Fntn_oauth_callback",
+    );
+
+    // Open the authorization URL in the browser
+    open_url(auth_url);
+
+    // Wait for the authorization code from the callback
+    let notion_auth_code = match rx.recv().await {
+        Some(code) => {
+            println!("Received authorization code: {}", code);
+            code  // If the code is received successfully, continue.
+        },
+        None => {
+            let error_message = "Failed to receive authorization code".to_string();
+            eprintln!("Error: {}", error_message);
+            return Err(error_message);  // Log and return the error if no code is received.
+        }
+    };
+
+    // Shutdown the Warp server after receiving the code
+    let _ = shutdown_tx.send(());
+
+    // Exchange the authorization code for an access token
+    let client = reqwest::Client::new();
+
+    let encoded = encode(format!("{}:{}", notion_client_id, notion_secret));
+    let token_url = "https://api.notion.com/v1/oauth/token";
+
+    let params = [
+        ("grant_type", "authorization_code"),
+        ("code", notion_auth_code.as_str()),
+        ("redirect_uri", "http://localhost:35440/ntn_oauth_callback")
+    ];
+
+    let response = client
+        .post(token_url)
+        .header("Authorization", format!("Basic {}", encoded))
+        .header("Content-Type", "application/json")
+        .header("Accept", "application/json")
+        .form(&params)
+        .send()
+        .await
+        .map_err(|e| {
+            eprintln!("Error occurred: {}", e.to_string());
+            e.to_string()
+        })?;
+
+    if response.status().is_success() {
+        println!("response: {:?}", response.text().await.unwrap());
+
+        // let token_response: SlackAccessTokenResponse = response
+        //     .json()
+        //     .await
+        //     .map_err(|e| {
+        //         eprintln!("Failed to deserialize JSON: {:?}", e);
+        //         e.to_string()
+        //     })?;
+
+        // // // Store the access token in the configuration
+        // cfg.slack_token = token_response.access_token.clone();
+        // util::write_config(cfg).unwrap();
+
+        // println!("Slack authentication successful!");
+
+        // Ok(token_response.access_token)
+        Ok("test".to_string())
     } else {
         let error_text = response.text().await.unwrap_or_else(|_| "No error text".to_string());
         Err(format!("Error: Unable to get access token. {}", error_text))

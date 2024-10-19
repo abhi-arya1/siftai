@@ -1,6 +1,6 @@
-use actix_files::NamedFile;
 use actix_cors::Cors;
-use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder, middleware::Logger};
+use actix_files::NamedFile;
+use actix_web::{middleware::Logger, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use std::env;
 use std::path::{Path, PathBuf};
 
@@ -23,11 +23,11 @@ async fn get_file(req: HttpRequest, path: web::Path<PathBuf>) -> impl Responder 
 
     match NamedFile::open(full_path.as_ref() as &Path) {
         Ok(named_file) => {
-            println!("Serving file: {:?}", named_file.path());
+            println!("FILE:INFO: Requested File (200): {:?}", named_file.path());
             named_file.into_response(&req)
         }
         Err(e) => {
-            println!("Failed to open file: {:?}", e);
+            println!("FILE:INFO: Request File Failed (500): {:?}", e);
             HttpResponse::InternalServerError().body("Failed to open file")
         }
     }
@@ -58,9 +58,9 @@ pub async fn serve() -> std::io::Result<()> {
             .allow_any_method() // Allow any HTTP method (GET, POST, etc.)
             .allow_any_header(); // Allow any headers
         App::new()
-        .wrap(Logger::default()) // Add logger middleware
-        .wrap(cors)
-        .service(web::resource("/{path:.*}").route(web::get().to(get_file)))
+            .wrap(Logger::default()) // Add logger middleware
+            .wrap(cors)
+            .service(web::resource("/{path:.*}").route(web::get().to(get_file)))
     })
     .bind("127.0.0.1:35438")?;
 

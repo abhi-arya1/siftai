@@ -21,6 +21,7 @@ import {
   FileText,
   ImageIcon,
 } from "lucide-react";
+import { IconBrandNotion } from "@tabler/icons-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@nextui-org/kbd";
@@ -193,6 +194,7 @@ const FileExplorer = () => {
     useState(false);
   const [ghToken, setGhToken] = useState<string | null>(null);
   const [slackToken, setSlackToken] = useState<string | null>(null);
+  const [notionToken, setNotionToken] = useState<string | null>(null);
   // const invoke = window.__TAURI__.invoke;
 
   useEffect(() => {
@@ -220,6 +222,16 @@ const FileExplorer = () => {
         setSlackToken(err as string);
       });
   };
+
+  const handleNotionOauth = async () => {
+    invoke("ntn_oauth")
+      .then((res) => {
+        setNotionToken(res as string);
+      })
+      .catch((err) => {
+        setNotionToken(err as string);
+      });
+  }
 
   const [files, setFiles] = useState<string | null>(null); // Declare state to hold the files
 
@@ -367,6 +379,12 @@ const FileExplorer = () => {
                   name="Slack"
                   isAuthenticated={!!slackToken}
                   onClick={handleSlackOauth}
+                />
+                <IntegrationCard
+                  logo={IconBrandNotion}
+                  name="Notion"
+                  isAuthenticated={!!notionToken}
+                  onClick={handleNotionOauth}
                 />
                 {/* <IntegrationCard
                   logo={Discord}
