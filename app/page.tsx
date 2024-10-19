@@ -4,13 +4,9 @@ import Image from "next/image";
 // import sift_logo from "../src-tauri/icons/sift_logo.png";
 import { Menu, Transition, Dialog } from "@headlessui/react";
 import { motion } from "framer-motion";
-<<<<<<< HEAD
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons';
-
-=======
 import { getClient, ResponseType } from '@tauri-apps/api/http';
->>>>>>> 5aa3cf4d9b4c3fb856d9d28973495aa485a9d40d
 import {
   Command,
   Search,
@@ -26,7 +22,7 @@ import {
   FileText,
   ImageIcon,
 } from "lucide-react";
-import { IconBrandGithub, IconBrandNotion } from "@tabler/icons-react";
+import { IconBrandGithub, IconBrandNotion, IconBrandGoogle } from "@tabler/icons-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@nextui-org/kbd";
@@ -195,15 +191,12 @@ const FileExplorer = () => {
   const [selectedResult, setSelectedResult] = useState<SearchResultItem | null>(
     null,
   );
-  const [isIntegrationsDialogOpen, setIsIntegrationsDialogOpen] =
-    useState(false);
+  const [isIntegrationsDialogOpen, setIsIntegrationsDialogOpen] = useState(false);
   const [ghToken, setGhToken] = useState<string | null>(null);
   const [slackToken, setSlackToken] = useState<string | null>(null);
-<<<<<<< HEAD
   const [discordToken, setDiscordToken] = useState<string | null>(null);
-=======
   const [notionToken, setNotionToken] = useState<string | null>(null);
->>>>>>> 5aa3cf4d9b4c3fb856d9d28973495aa485a9d40d
+  const [googleToken, setGoogleToken] = useState<string | null>(null);
   // const invoke = window.__TAURI__.invoke;
 
   useEffect(() => {
@@ -232,7 +225,6 @@ const FileExplorer = () => {
       });
   };
 
-<<<<<<< HEAD
   const handleDiscordOauth = async () => {
     invoke("disc_oauth")
       .then((res) => {
@@ -242,7 +234,7 @@ const FileExplorer = () => {
         setDiscordToken(err as string);
       });
   };
-=======
+  
   const handleNotionOauth = async () => {
     invoke("ntn_oauth")
       .then((res) => {
@@ -252,7 +244,16 @@ const FileExplorer = () => {
         setNotionToken(err as string);
       });
   }
->>>>>>> 5aa3cf4d9b4c3fb856d9d28973495aa485a9d40d
+
+  const handleGoogleOauth = async () => {
+    invoke("ggl_oauth")
+      .then((res) => {
+        setGoogleToken(res as string);
+      })
+      .catch((err) => {
+        setGoogleToken(err as string);
+      });
+  }
 
   const [files, setFiles] = useState<string | null>(null); // Declare state to hold the files
 
@@ -402,20 +403,22 @@ const FileExplorer = () => {
                   onClick={handleSlackOauth}
                 />
                 <IntegrationCard
-<<<<<<< HEAD
-                  logo={() => <FontAwesomeIcon icon={faDiscord} />}
-=======
                   logo={IconBrandNotion}
                   name="Notion"
                   isAuthenticated={!!notionToken}
                   onClick={handleNotionOauth}
                 />
-                {/* <IntegrationCard
-                  logo={Discord}
->>>>>>> 5aa3cf4d9b4c3fb856d9d28973495aa485a9d40d
+                <IntegrationCard
+                  logo={() => <FontAwesomeIcon icon={faDiscord} />}
                   name="Discord"
                   isAuthenticated={!!discordToken}
                   onClick={handleDiscordOauth}
+                />
+                <IntegrationCard
+                  logo={IconBrandGoogle}
+                  name="Google"
+                  isAuthenticated={!!googleToken}
+                  onClick={handleGoogleOauth}
                 />
               </div>
             </Dialog.Panel>

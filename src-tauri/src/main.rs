@@ -81,6 +81,11 @@ async fn ntn_oauth() -> Result<String, String> {
     invokes::notion_oauth().await
 }
 
+#[tauri::command]
+async fn ggl_oauth() -> Result<String, String> {
+    invokes::google_oauth().await
+}
+
 fn main() {
     let quit = CustomMenuItem::new("quit".to_string(), "Quit");
     let submenu = Submenu::new("File", Menu::new().add_item(quit));
@@ -98,7 +103,7 @@ fn main() {
     println!("Chroma database is configured.\n");
 
     println!("Parsing files in the background...");
-    files::parse_files();
+    // files::parse_files();
 
     println!("\nCompleted Startup Configurations\n");
 
@@ -131,7 +136,8 @@ fn main() {
             gh_find,
             slk_oauth,
             ntn_oauth,
-            disc_oauth
+            disc_oauth,
+            ggl_oauth
         ])
         .menu(Menu::new().add_submenu(submenu))
         .on_window_event(move |event| {

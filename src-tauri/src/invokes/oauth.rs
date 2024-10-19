@@ -320,7 +320,7 @@ pub async fn notion_oauth() -> Result<String, String> {
     // Start the Warp server with graceful shutdown
     let server = warp::serve(redirect_route);
     let (_addr, server_fut) = server.bind_with_graceful_shutdown(
-        ([127, 0, 0, 1], 35440),
+        ([127, 0, 0, 1], 35441),
         async {
             shutdown_rx.await.ok();
         },
@@ -331,7 +331,7 @@ pub async fn notion_oauth() -> Result<String, String> {
 
     // Notion authorization URL with redirect_uri pointing to the Warp server
     open_url(
-        "https://api.notion.com/v1/oauth/authorize?client_id=124d872b-594c-801e-bef4-00371de7fd49&response_type=code&owner=user&redirect_uri=http%3A%2F%2Flocalhost%3A35440%2Fntn_oauth_callback".to_string()
+        "https://api.notion.com/v1/oauth/authorize?client_id=124d872b-594c-801e-bef4-00371de7fd49&response_type=code&owner=user&redirect_uri=http%3A%2F%2Flocalhost%3A35441%2Fntn_oauth_callback".to_string()
     );
 
     // Wait for the authorization code from the callback
@@ -359,7 +359,7 @@ pub async fn notion_oauth() -> Result<String, String> {
     let params = [
         ("grant_type", "authorization_code"),
         ("code", notion_auth_code.as_str()),
-        ("redirect_uri", "http://localhost:35440/ntn_oauth_callback")
+        ("redirect_uri", "http://localhost:35441/ntn_oauth_callback")
     ];
 
     let response = client
@@ -399,6 +399,7 @@ pub async fn notion_oauth() -> Result<String, String> {
         Err(format!("Error: Unable to get access token. {}", error_text))
     }
 }
+
 
 pub async fn discord_oauth() -> Result<String, String> {
     let discord_client_id = "1297308893587705877";
@@ -513,6 +514,127 @@ pub async fn discord_oauth() -> Result<String, String> {
         println!("Discord authentication successful!");
 
         Ok(token_response.access_token)
+    } else {
+        let error_text = response.text().await.unwrap_or_else(|_| "No error text".to_string());
+        Err(format!("Error: Unable to get access token. {}", error_text))
+    }
+}
+
+
+
+pub async fn google_oauth() -> Result<String, String> {
+    let google_client_id = "97283464398-5dp31l4s5p38tvh9m621p7954v1rm2cs.apps.googleusercontent.com";
+    let google_secret = "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";
+
+    let mut cfg = util::read_config().unwrap();
+
+    // Return the token if it already exists
+    if !cfg.google_token.is_empty() {
+        return Ok(cfg.google_token);
+    }
+
+    let (tx, mut rx) = tokio::sync::mpsc::channel::<String>(1);
+
+    // Define the redirect route to handle the callback
+    let redirect_route = warp::path!("ggl_auth_callback")
+        .and(warp::query::<std::collections::HashMap<String, String>>())
+        .and(warp::any().map(move || tx.clone())) // Move tx into the warp handler
+        .and_then(|params: std::collections::HashMap<String, String>, tx: tokio::sync::mpsc::Sender<String>| async move {
+            if let Some(code) = params.get("code") {
+                tx.send(code.clone()) // Send the code to the main handler
+                    .await
+                    .map_err(|e| warp::reject::custom(OAuthError(e.to_string())))?;
+                Ok::<_, warp::Rejection>(warp::reply::html("Authorization successful! You can close this window."))
+            } else {
+                Err(warp::reject::custom(OAuthError("No code parameter found".to_string())))
+            }
+        });
+
+    let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel();
+    
+    // Start the Warp server with graceful shutdown
+    let server = warp::serve(redirect_route);
+    let (_addr, server_fut) = server.bind_with_graceful_shutdown(
+        ([127, 0, 0, 1], 35442),
+        async {
+            shutdown_rx.await.ok();
+        },
+    );
+
+    // Spawn the Warp server
+    tokio::spawn(server_fut);
+
+    // Define the OAuth scopes required by your Slack bot
+    let scopes = "messages.read+dm_channels.read";
+    let encoded_url = urlencoding::encode("http://localhost:35442/ggl_auth_callback");
+
+    // Slack authorization URL with redirect_uri pointing to the Warp server
+    let auth_url = format!(
+        "https://accounts.google.com/o/oauth2/v2/auth?scope=https%3A//www.googleapis.com/auth/drive.metadata.readonly&access_type=offline&include_granted_scopes=true&response_type=code&state=state_parameter_passthrough_value&redirect_uri={}&client_id={}",
+        encoded_url, google_client_id
+    );
+
+    // Open the authorization URL in the browser
+    open_url(auth_url);
+
+    // Wait for the authorization code from the callback
+
+    let ggl_auth_code = match rx.recv().await {
+        Some(code) => {
+            println!("Received authorization code: {}", code);
+            code  // If the code is received successfully, continue.
+        },
+        None => {
+            let error_message = "Failed to receive authorization code".to_string();
+            eprintln!("Error: {}", error_message);
+            return Err(error_message);  // Log and return the error if no code is received.
+        }
+    };
+
+    // Shutdown the Warp server after receiving the code
+    let _ = shutdown_tx.send(());
+
+    // Exchange the authorization code for an access token
+    let client = reqwest::Client::new();
+    let token_url = "https://oauth2.googleapis.com/token";
+
+    let params = [
+        ("client_id", google_client_id),
+        ("client_secret", google_secret),
+        ("code", ggl_auth_code.as_str()),
+        ("redirect_uri", "https://localhost:35442/ggl_auth_callback"),
+        ("grant_type", "authorization_code")
+    ];
+
+    let response = client
+        .post(token_url)
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .form(&params)
+        .send()
+        .await
+        .map_err(|e| {
+            eprintln!("Error occurred: {}", e.to_string());
+            e.to_string()
+        })?;
+
+    if response.status().is_success() {
+        println!("response: {:?}", response.text().await.unwrap());
+        // let token_response: DiscordAccessTokenResponse = response
+        //     .json()
+        //     .await
+        //     .map_err(|e| {
+        //         eprintln!("Failed to deserialize JSON: {:?}", e);
+        //         e.to_string()
+        //     })?;
+
+        // // // Store the access token in the configuration
+        // cfg.discord_token = token_response.access_token.clone();
+        // util::write_config(cfg).unwrap();
+
+        // println!("Discord authentication successful!");
+
+        // Ok(token_response.access_token)
+        Ok("TEST".to_string()  )
     } else {
         let error_text = response.text().await.unwrap_or_else(|_| "No error text".to_string());
         Err(format!("Error: Unable to get access token. {}", error_text))
