@@ -13,6 +13,7 @@ import {
   MoveUpRight,
   Zap,
   XIcon,
+  Images,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
@@ -70,6 +71,7 @@ const FileExplorer = () => {
   const [isIntegrationsDialogOpen, setIsIntegrationsDialogOpen] =
     useState(false);
   const [ghToken, setGhToken] = useState<string | null>(null);
+  const invoke = window.__TAURI__.invoke;
 
   const handleGitHubOauth = async () => {
     invoke("gh_oauth")
@@ -142,6 +144,7 @@ const FileExplorer = () => {
           <Menu.Button className="pl-2 rounded-lg hover:drop-shadow-xl focus:outline-none">
             <div className="flex items-center flex-row gap-x-0.75 p-1 rounded-md bg-white dark:bg-muted hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out">
               <Settings size={14} />
+              {/* <img src="sift_logo.png" alt="settings" className="w-5 h-5" /> */}
             </div>
           </Menu.Button>
           <Transition
@@ -173,7 +176,7 @@ const FileExplorer = () => {
                     className={`group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 text-red-500 ${
                       active ? "bg-gray-100 dark:bg-white/10" : ""
                     } hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out`}
-                    onClick={() => setIsIntegrationsDialogOpen(true)}
+                    // onClick={() => invoke("exit-app")}
                   >
                     Quit Sift
                     <XIcon size={16} className="ml-auto text-red-500" />
