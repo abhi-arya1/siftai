@@ -3,6 +3,8 @@ use std::error::Error;
 use std::process::Command;
 use std::str;
 
+use crate::files::FileMetadata;
+
 #[derive(Debug)]
 pub enum Action {
     GetOrCreate {
@@ -12,6 +14,7 @@ pub enum Action {
         collection_name: String,
         documents: Vec<String>,
         ids: Vec<String>,
+        metadatas: Vec<FileMetadata>,
     },
     Query {
         collection_name: String,
@@ -42,9 +45,11 @@ pub fn run_python_sdk(
             collection_name,
             documents,
             ids,
+            metadatas,
         } => {
             let docs_str = format!("{:?}", documents);
             let ids_str = format!("{:?}", ids);
+            let metadatas_str = format!("{:?}", metadatas);
 
             Command::new("python3")
                 .arg(sdkpath)
@@ -53,6 +58,7 @@ pub fn run_python_sdk(
                 .arg(&collection_name) // Borrow the collection name
                 .arg(&docs_str)
                 .arg(&ids_str)
+                .arg(&metadatas_str)
                 .output()?
         }
         Action::Query {
@@ -83,7 +89,9 @@ pub fn run_python_sdk(
         }
     } else {
         let stderr = str::from_utf8(&output.stderr)?;
+        let stdout: String = str::from_utf8(&output.stdout)?.to_string();
         eprintln!("Python SDK Error: {}", stderr);
+        eprintln!("Python SDK Output: {}", stdout);
         Err(Box::from(stderr))
     }
 }

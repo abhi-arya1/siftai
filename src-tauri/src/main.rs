@@ -5,7 +5,7 @@
 
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
-use tauri::{CustomMenuItem, Manager, Menu, Submenu};
+use tauri::{CustomMenuItem, Menu, Submenu};
 use tokio::signal;
 use util::db_formatted_path;
 
@@ -47,7 +47,8 @@ fn start_chroma_db() {
         &chroma::Action::GetOrCreate {
             collection_name: "siftfiles".to_string(),
         },
-    ).expect("Failed to create Chroma database collection");
+    )
+    .expect("Failed to create Chroma database collection");
 }
 
 #[tauri::command]
@@ -85,6 +86,9 @@ fn main() {
 
     start_chroma_db();
     println!("Chroma database is configured.\n");
+
+    println!("Parsing files in the background...");
+    files::parse_files();
 
     println!("\nCompleted Startup Configurations\n");
 
