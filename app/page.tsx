@@ -97,7 +97,7 @@ const FileExplorer = () => {
   };
 
   const handleFetchFiles = () => {
-      const param = "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"; // Set your parameter value here
+      const param = ""; // Set your parameter value here
       getGitHubFiles(param);
   };
 
