@@ -1,7 +1,16 @@
 "use client";
 import React, { useState, useEffect, Fragment } from "react";
 import { Menu, Transition, Dialog } from "@headlessui/react";
-import { Command, Search, Settings, X } from "lucide-react";
+import {
+  Command,
+  Search,
+  Settings,
+  X,
+  Github,
+  Slack,
+  CheckIcon,
+  ArrowUpRight,
+} from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@nextui-org/kbd";
@@ -26,25 +35,43 @@ const mockFiles = [
   },
 ];
 
+const IntegrationCard = ({ logo: Logo, name, isAuthenticated, onClick }) => (
+  <div
+    className="w-full p-4 flex items-center justify-between rounded-lg dark:bg-muted hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out cursor-pointer"
+    onClick={onClick}
+  >
+    <div className="flex items-center gap-x-2">
+      <Logo className="text-black dark:text-white" />
+      <span className="dark:text-white">{name}</span>
+    </div>
+    {isAuthenticated ? (
+      <CheckIcon className="pl-2 text-green-500" />
+    ) : (
+      <ArrowUpRight className="pl-2 text-gray-500" />
+    )}
+  </div>
+);
+
 const FileExplorer = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isIntegrationsDialogOpen, setIsIntegrationsDialogOpen] =
     useState(false);
+  const [ghToken, setGhToken] = useState<string | null>(null);
 
   // Handle system theme changes
   const [systemTheme, setSystemTheme] = useState<"light" | "dark">("dark");
 
-  const [ghToken, setGhToken] = useState("NONE");
-
   const handleGitHubOauth = async () => {
-    invoke("gh_oauth").then((res) => {
-      setGhToken(res as string);
-    }).catch((err) => {
-      setGhToken(err as string);
-    });
-  }
+    invoke("gh_oauth")
+      .then((res) => {
+        setGhToken(res as string);
+      })
+      .catch((err) => {
+        setGhToken(err as string);
+      });
+  };
 
   const getFileActions = (fileType) => {
     const commonActions = [
@@ -140,12 +167,12 @@ const FileExplorer = () => {
         <Dialog
           open={isIntegrationsDialogOpen}
           onClose={() => setIsIntegrationsDialogOpen(false)}
-          className="relative z-50"
+          className="relative z-50 transition-all duration-150 ease-in-out"
         >
           <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
 
-          <div className="fixed inset-0 flex items-center justify-center p-4">
-            <Dialog.Panel className="mx-auto max-w-sm rounded-xl bg-white dark:bg-muted p-6 shadow-xl">
+          <div className="fixed inset-0 flex items-center justify-center p-4 transition-all duration-150 ease-in-out">
+            <Dialog.Panel className="mx-auto rounded-xl w-[40%] bg-white dark:bg-muted p-6 shadow-xl transition-all duration-150 ease-in-out">
               <div className="flex justify-between items-center mb-4">
                 <Dialog.Title className="text-lg font-medium dark:text-white">
                   Integrations
@@ -158,28 +185,25 @@ const FileExplorer = () => {
                 </button>
               </div>
 
-              {/* Add your integration buttons here */}
               <div className="space-y-2">
-                <button className="w-full p-2 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white transition-colors"
+                <IntegrationCard
+                  logo={Github}
+                  name="GitHub"
+                  isAuthenticated={!!ghToken}
                   onClick={handleGitHubOauth}
-                >
-                  {ghToken}
-                </button>
-                <button className="w-full p-2 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white transition-colors">
-                  Slack Integration
-                </button>
-                <button className="w-full p-2 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white transition-colors">
-                  Google Drive Integration
-                </button>
-              </div>
-
-              <div className="mt-6">
-                <button
-                  onClick={() => setIsIntegrationsDialogOpen(false)}
-                  className="w-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-lg py-2 transition-colors"
-                >
-                  Close
-                </button>
+                />
+                <IntegrationCard
+                  logo={Slack}
+                  name="Slack"
+                  isAuthenticated={!!ghToken}
+                  onClick={handleGitHubOauth}
+                />
+                {/* <IntegrationCard
+                  logo={Discord}
+                  name="Discord"
+                  isAuthenticated={!!ghToken}
+                  onClick={handleGitHubOauth}
+                /> */}
               </div>
             </Dialog.Panel>
           </div>
