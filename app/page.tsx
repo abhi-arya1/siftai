@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@nextui-org/kbd";
 import { cn } from "@/lib/utils";
+import { invoke } from "@tauri-apps/api/tauri";
 
 const mockFiles = [
   {
@@ -34,6 +35,16 @@ const FileExplorer = () => {
 
   // Handle system theme changes
   const [systemTheme, setSystemTheme] = useState<"light" | "dark">("dark");
+
+  const [ghToken, setGhToken] = useState("NONE");
+
+  const handleGitHubOauth = async () => {
+    invoke("gh_oauth").then((res) => {
+      setGhToken(res as string);
+    }).catch((err) => {
+      setGhToken(err as string);
+    });
+  }
 
   const getFileActions = (fileType) => {
     const commonActions = [
@@ -149,8 +160,10 @@ const FileExplorer = () => {
 
               {/* Add your integration buttons here */}
               <div className="space-y-2">
-                <button className="w-full p-2 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white transition-colors">
-                  GitHub Integration
+                <button className="w-full p-2 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white transition-colors"
+                  onClick={handleGitHubOauth}
+                >
+                  {ghToken}
                 </button>
                 <button className="w-full p-2 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white transition-colors">
                   Slack Integration
