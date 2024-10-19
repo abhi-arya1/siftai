@@ -71,7 +71,7 @@ const FileExplorer = () => {
   const [isIntegrationsDialogOpen, setIsIntegrationsDialogOpen] =
     useState(false);
   const [ghToken, setGhToken] = useState<string | null>(null);
-  const invoke = window.__TAURI__.invoke;
+  // const invoke = window.__TAURI__.invoke;
 
   const handleGitHubOauth = async () => {
     invoke("gh_oauth")
