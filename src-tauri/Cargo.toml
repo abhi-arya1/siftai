@@ -30,6 +30,7 @@ threadpool = "1.8"
 crossbeam-channel = "0.5"
 num_cpus = "1.14"
 tauri-plugin-localhost = "0.1.0"
+mime_guess = "2.0"
 
 
 [features]

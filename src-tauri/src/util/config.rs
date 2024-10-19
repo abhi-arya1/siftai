@@ -14,6 +14,30 @@ pub struct AppConfig {
 }
 
 
+pub fn db_path() -> PathBuf {
+    if let Some(mut db_pt) = config_dir() {
+        db_pt = db_pt.join("sift_datastore");
+        if !db_pt.exists() {
+            std::fs::create_dir(&db_pt).expect("Failed to create database directory");
+        }
+        db_pt
+        // println!("DB path: {}", db_pt.display());
+    } else {
+        println!("Failed to get config directory");
+        PathBuf::new()
+    }
+}
+
+pub fn db_formatted_path() -> String {
+    let path = db_path();
+    let path_str = path.display().to_string();
+
+    let escaped_path = path_str.replace(' ', r"\ ");
+
+    escaped_path
+}
+
+
 pub fn config_path() -> PathBuf {
     if let Some(mut cfg_pt) = config_dir() {
         cfg_pt = cfg_pt.join("sift.config.json");

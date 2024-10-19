@@ -70,6 +70,7 @@ dependencies = [
  "dirs",
  "dotenvy",
  "ignore",
+ "mime_guess",
  "num_cpus",
  "open 5.3.0",
  "rayon",

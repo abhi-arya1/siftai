@@ -77,7 +77,7 @@ pub async fn github_oauth() -> Result<String, String> {
     // Start the server
     let server = warp::serve(routes);
     let (_addr, server) = server.bind_with_graceful_shutdown(
-        ([127, 0, 0, 1], 34565),
+        ([127, 0, 0, 1], 35435),
         async {
             shutdown_rx.await.ok();
         },

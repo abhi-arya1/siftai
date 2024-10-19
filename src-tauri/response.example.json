@@ -1,0 +1,9 @@
+[
+    {
+        "id": 1,
+        "filename": "filename.fileextension",
+        "abspath": "/path/to/filename.fileextension", // This is a url if its not a local file 
+        "local?" : true, // This is a boolean
+        "filecontent": "filecontent", // This is a string if local is false
+    }
+]
