@@ -72,13 +72,13 @@ async fn slk_oauth() -> Result<String, String> {
 }
 
 #[tauri::command]
-<<<<<<< HEAD
 async fn disc_oauth() -> Result<String, String> {
     invokes::discord_oauth().await
-=======
+}
+
+#[tauri::command]
 async fn ntn_oauth() -> Result<String, String> {
     invokes::notion_oauth().await
->>>>>>> 5aa3cf4d9b4c3fb856d9d28973495aa485a9d40d
 }
 
 fn main() {
@@ -125,17 +125,14 @@ fn main() {
 
             Ok(())
         })
-<<<<<<< HEAD
-        .invoke_handler(tauri::generate_handler![gh_oauth, run_subprocess, gh_find, slk_oauth, disc_oauth])
-=======
         .invoke_handler(tauri::generate_handler![
             gh_oauth,
             run_subprocess,
             gh_find,
             slk_oauth,
-            ntn_oauth
+            ntn_oauth,
+            disc_oauth
         ])
->>>>>>> 5aa3cf4d9b4c3fb856d9d28973495aa485a9d40d
         .menu(Menu::new().add_submenu(submenu))
         .on_window_event(move |event| {
             if let tauri::WindowEvent::CloseRequested { .. } = event.event() {
