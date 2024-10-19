@@ -11,6 +11,7 @@ import {
   CheckIcon,
   ArrowUpRight,
   ArrowDown,
+  MoveUpRight,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
@@ -36,22 +37,30 @@ const mockFiles = [
   },
 ];
 
-const IntegrationCard = ({ logo: Logo, name, isAuthenticated, onClick }) => (
-  <div
-    className="w-full p-4 flex items-center justify-between rounded-lg dark:bg-muted hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out cursor-pointer"
-    onClick={onClick}
-  >
-    <div className="flex items-center gap-x-2">
-      <Logo className="text-black dark:text-white" />
-      <span className="dark:text-white">{name}</span>
+const IntegrationCard = ({ logo: Logo, name, isAuthenticated, onClick }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div
+      className="w-full p-4 flex items-center justify-between rounded-lg dark:bg-muted hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out cursor-pointer"
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="flex items-center gap-x-2">
+        <Logo className="text-black dark:text-white" />
+        <span className="dark:text-white">{name}</span>
+      </div>
+      {isAuthenticated ? (
+        <CheckIcon className="pl-2 text-green-500" />
+      ) : isHovered ? (
+        <MoveUpRight className="pl-2 text-gray-500 transition-all duration-300 hover:scale-110 ease-in-out" />
+      ) : (
+        <ArrowUpRight className="pl-2 text-gray-500 transition-all duration-300 hover:scale-110 ease-in-out" />
+      )}
     </div>
-    {isAuthenticated ? (
-      <CheckIcon className="pl-2 text-green-500" />
-    ) : (
-      <ArrowUpRight className="pl-2 text-gray-500" />
-    )}
-  </div>
-);
+  );
+};
 
 const FileExplorer = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -133,9 +142,8 @@ const FileExplorer = () => {
       <div className="h-8 border-b border-zinc-700 flex justify-end items-center px-2">
         <Menu>
           <Menu.Button className="pl-2 rounded-lg hover:drop-shadow-xl">
-            <div className="flex items-center flex-row gap-x-0.75 p-1 rounded-md bg-white bg-muted hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out">
+            <div className="flex items-center flex-row gap-x-0.75 p-1 rounded-md bg-white dark:bg-muted hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out">
               <Settings size={14} />
-              <ArrowDown size={10} />
             </div>
           </Menu.Button>
           <Transition

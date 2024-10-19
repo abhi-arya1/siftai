@@ -64,7 +64,8 @@
         "resizable": true,
         "title": "sift",
         "width": 800,
-        "decorations": true
+        "decorations": true,
+        "transparent": true
       }
     ]
   }
