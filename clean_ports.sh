@@ -1,0 +1,1 @@
+kill -9 $(lsof -i :35436) && kill -9 $(lsof -i :35443)

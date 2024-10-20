@@ -3,10 +3,9 @@
     windows_subsystem = "windows"
 )]
 
-
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
-use tauri::{CustomMenuItem, Menu, Submenu};
+use tauri::{AppHandle, CustomMenuItem, Menu, Submenu};
 use tokio::signal;
 use util::db_formatted_path;
 
@@ -47,14 +46,37 @@ fn start_chroma_db() {
         &chroma::Action::GetOrCreate {
             collection_name: "siftfiles".to_string(),
         },
-        false
+        false,
     )
     .expect("Failed to create Chroma database collection");
+}
+
+fn start_chroma_query_agent() -> Arc<Mutex<std::process::Child>> {
+    let chrqr = Arc::new(Mutex::new(
+        Command::new("uvicorn")
+            .arg("src.queryapi:app")
+            .arg("--host")
+            .arg("127.0.0.1")
+            .arg("--port")
+            .arg("35443")
+            .stdout(Stdio::inherit()) // Inherit standard output for logging
+            .stderr(Stdio::inherit()) // Inherit standard error for logging
+            .spawn()
+            .expect("Failed to start Chroma server on Windows"),
+    ));
+
+    let _ = Arc::clone(&chrqr);
+    chrqr
 }
 
 #[tauri::command]
 fn run_subprocess(command: String) -> Result<String, String> {
     invokes::run_cmd(command)
+}
+
+#[tauri::command]
+fn end_app() {
+    std::process::exit(0);
 }
 
 #[tauri::command]
@@ -103,7 +125,8 @@ fn main() {
     start_chroma_db();
     println!("Chroma database is configured.\n");
 
-    // println!("Parsing files in the background...");
+    let _ = start_chroma_query_agent();
+    println!("Running Chroma Query Agent on http://localhost:35443...\n");
 
     println!("\nCompleted Startup Configurations\n");
 
@@ -137,7 +160,8 @@ fn main() {
             slk_oauth,
             ntn_oauth,
             disc_oauth,
-            ggl_oauth
+            ggl_oauth,
+            end_app
         ])
         .menu(Menu::new().add_submenu(submenu))
         .on_window_event(move |event| {

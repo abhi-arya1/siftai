@@ -41,6 +41,7 @@ import { Input } from "@/components/ui/input";
 import { Kbd } from "@nextui-org/kbd";
 import { cn } from "@/lib/utils";
 import { invoke } from "@tauri-apps/api/tauri";
+import { queryChroma } from "@/lib/chromalib";
 
 type SearchResultItem = {
   id: number;
@@ -459,7 +460,7 @@ const FileExplorer = () => {
                     className={`group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 text-red-500 ${
                       active ? "bg-gray-100 dark:bg-white/10" : ""
                     } hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out`}
-                    // onClick={() => invoke("exit-app")}
+                    onClick={() => invoke("end_app")}
                   >
                     Quit Sift
                     <XIcon size={16} className="ml-auto text-red-500" />
@@ -492,7 +493,7 @@ const FileExplorer = () => {
               </div>
 
               <div className="space-y-2">
-                <button onClick={async () => invoke("rungh")}>
+                <button onClick={async () => await queryChroma('Tests')}>
                   Run GitHub
                 </button>
                 <IntegrationCard

@@ -4,29 +4,12 @@ use std::error::Error;
 use std::process::Command;
 use std::str;
 
-use crate::files::FileMetadata;
+// use crate::files::FileMetadata;
 
 #[derive(Debug)]
 pub enum Action {
     GetOrCreate {
         collection_name: String,
-    },
-    Add {
-        collection_name: String,
-        documents: Vec<String>,
-        ids: Vec<String>,
-        metadatas: Vec<FileMetadata>,
-    },
-    AddImage {
-        collection_name: String,
-        images: Vec<String>,
-        ids: Vec<String>,
-        metadatas: Vec<FileMetadata>,
-    },
-    Query {
-        collection_name: String,
-        query_text: String,
-        n_results: usize,
     },
 }
 
@@ -60,59 +43,6 @@ pub fn run_python_sdk(
             .arg("get_or_create")
             .arg(&collection_name) // Borrow the collection name
             .output()?,
-        Action::Add {
-            collection_name,
-            documents,
-            ids,
-            metadatas,
-        } => {
-            let docs_str = format!("{:?}", documents);
-            let ids_str = format!("{:?}", ids);
-            let metadatas_str = format!("{:?}", metadatas);
-
-            Command::new(python_cmd)
-                .arg(sdkpath)
-                .arg(db_path)
-                .arg("add")
-                .arg(&collection_name) // Borrow the collection name
-                .arg(&docs_str)
-                .arg(&ids_str)
-                .arg(&metadatas_str)
-                .output()?
-        }
-        Action::AddImage { 
-            collection_name ,
-            images,
-            ids,
-            metadatas,
-        } => {
-            let images_str = format!("{:?}", images);
-            let ids_str = format!("{:?}", ids);
-            let metadatas_str = format!("{:?}", metadatas);
-
-            Command::new(python_cmd)
-                .arg(sdkpath)
-                .arg(db_path)
-                .arg("add")
-                .arg(&collection_name) // Borrow the collection name
-                .arg("--images")
-                .arg(&images_str)
-                .arg(&ids_str)
-                .arg(&metadatas_str)
-                .output()?
-        }
-        Action::Query {
-            collection_name,
-            query_text,
-            n_results,
-        } => Command::new(python_cmd)
-            .arg(sdkpath)
-            .arg(db_path)
-            .arg("query")
-            .arg(&collection_name) // Borrow the collection name
-            .arg(&query_text) // Borrow the query text
-            .arg(n_results.to_string())
-            .output()?,
     };
 
     if output.status.success() {
@@ -122,13 +52,14 @@ pub fn run_python_sdk(
             println!("Python SDK output: {}", stdout);
         }
 
-        if let Action::Query { .. } = action {
-            let results: QueryResult = serde_json::from_str(stdout)?;
-            Ok(Some(results))
-        } else {
-            println!("Python SDK output: {}", stdout);
-            Ok(None)
-        }
+        // if let Action::Query { .. } = action {
+        //     let results: QueryResult = serde_json::from_str(stdout)?;
+        //     Ok(Some(results))
+        // } else {
+        //     println!("Python SDK output: {}", stdout);
+        //     Ok(None)
+        // }
+        Ok(None)
     } else {
         let stderr = str::from_utf8(&output.stderr)?;
         // let stdout: String = str::from_utf8(&output.stdout)?.to_string();

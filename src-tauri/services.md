@@ -29,4 +29,8 @@
   - Run this by invoking `ntn_oauth` from the Next.js frontend
 
 - 35442 - Google OAuth
+
   - Run this by invoking `ggl_oauth` from the Next.js frontend
+
+- 35443 - Chroma Server
+  - Run this by requesting `http://localhost:35443/query/{query}/{results#}` from the Next.js frontend
