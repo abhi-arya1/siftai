@@ -4,8 +4,6 @@ import Image from "next/image";
 // import sift_logo from "../src-tauri/icons/sift_logo.png";
 import { Menu, Transition, Dialog } from "@headlessui/react";
 import { motion } from "framer-motion";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDiscord } from '@fortawesome/free-brands-svg-icons';
 import { getClient, ResponseType } from '@tauri-apps/api/http';
 import {
   Command,
@@ -22,7 +20,7 @@ import {
   FileText,
   ImageIcon,
 } from "lucide-react";
-import { IconBrandGithub, IconBrandNotion, IconBrandGoogle } from "@tabler/icons-react";
+import { IconBrandGithub, IconBrandNotion, IconBrandGoogle, IconBrandDiscordFilled } from "@tabler/icons-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@nextui-org/kbd";
@@ -409,7 +407,7 @@ const FileExplorer = () => {
                   onClick={handleNotionOauth}
                 />
                 <IntegrationCard
-                  logo={() => <FontAwesomeIcon icon={faDiscord} />}
+                  logo={IconBrandDiscordFilled}
                   name="Discord"
                   isAuthenticated={!!discordToken}
                   onClick={handleDiscordOauth}
