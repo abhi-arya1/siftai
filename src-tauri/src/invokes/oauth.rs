@@ -256,7 +256,7 @@ pub async fn slack_oauth() -> Result<String, String> {
     tokio::spawn(server_fut);
 
     // Define the OAuth scopes required by your Slack bot
-    let scopes = "app_mentions:read,channels:read,files:read,links:read,remote_files:read";
+    let scopes = "app_mentions:read,channels:read,files:read,links:read,remote_files:read,groups:read,im:read,links:read,mpim:history,remote_files:read";
 
     // Slack authorization URL with redirect_uri pointing to the Warp server
     let auth_url = format!(
