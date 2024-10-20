@@ -5,7 +5,8 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use tokio::sync::mpsc;
 use urlencoding;
-use warp::Filter;
+use std::env;
+use dotenv::dotenv;
 
 use crate::util;
 
@@ -44,10 +45,27 @@ struct DiscordAccessTokenResponse {
 }
 
 pub async fn github_oauth() -> Result<String, String> {
-    let github_client_id = "Ov23liOMmuWUdFA35oZl";
-    let github_client_secret = "50b43b1fab7fd17c4f3acf754268ddcddfa34fc5";
+    dotenv().ok();
+    let mut client_id: String = String::new();
+    let mut client_secret: String = String::new();
+
+    match env::var("GITHUB_CLIENT_ID") {
+        Ok(value) => {
+            client_id = value; 
+        },
+        Err(e) => println!("Couldn't read GITHUB_CLIENT_ID: {}", e),
+    };
+
+    match env::var("GITHUB_CLIENT_SECRET") {
+        Ok(value) => {
+            client_secret = value;
+        },
+        Err(e) => println!("Couldn't read GITHUB_CLIENT_SECRET: {}", e),
+    };
 
     let mut cfg = util::read_config().unwrap();
+    let github_client_id: &str = client_id.as_str();
+    let github_client_secret: &str = client_secret.as_str();
 
     if !cfg.github_token.is_empty() {
         return Ok(cfg.github_token);
@@ -171,10 +189,27 @@ pub async fn github_oauth() -> Result<String, String> {
 }
 
 pub async fn slack_oauth() -> Result<String, String> {
-    let slack_client_id = "7906164823108.7891603819943";
-    let slack_client_secret = "4cd4649f28472fb5d5299f85e8696ed0";
+    dotenv().ok();
+    let mut client_id: String = String::new();
+    let mut client_secret: String = String::new();
+
+    match env::var("SLACK_CLIENT_ID") {
+        Ok(value) => {
+            client_id = value; 
+        },
+        Err(e) => println!("Couldn't read SLACK_CLIENT_ID: {}", e),
+    };
+
+    match env::var("SLACK_CLIENT_SECRET") {
+        Ok(value) => {
+            client_secret = value;
+        },
+        Err(e) => println!("Couldn't read SLACK_CLIENT_SECRET: {}", e),
+    };
 
     let mut cfg = util::read_config().unwrap();
+    let slack_client_id: &str = client_id.as_str();
+    let slack_client_secret: &str = client_secret.as_str();
 
     // Return the token if it already exists
     if !cfg.slack_token.is_empty() {
@@ -292,10 +327,27 @@ pub async fn slack_oauth() -> Result<String, String> {
 }
 
 pub async fn notion_oauth() -> Result<String, String> {
-    let notion_client_id = "124d872b-594c-801e-bef4-00371de7fd49";
-    let notion_secret = "secret_Vit6gcfLRaypAQcouQTHiLQfwaiuEznHw9nyFt820NP";
+    dotenv().ok();
+    let mut client_id: String = String::new();
+    let mut client_secret: String = String::new();
+
+    match env::var("NOTION_CLIENT_ID") {
+        Ok(value) => {
+            client_id = value; 
+        },
+        Err(e) => println!("Couldn't read NOTION_CLIENT_ID: {}", e),
+    };
+
+    match env::var("NOTION_SECRET") {
+        Ok(value) => {
+            client_secret = value;
+        },
+        Err(e) => println!("Couldn't read NOTION_SECRET: {}", e),
+    };
 
     let mut cfg = util::read_config().unwrap();
+    let notion_client_id: &str = client_id.as_str();
+    let notion_secret: &str = client_secret.as_str();
 
     // Return the token if it already exists
     if !cfg.notion_token.is_empty() {
@@ -411,10 +463,27 @@ pub async fn notion_oauth() -> Result<String, String> {
 }
 
 pub async fn discord_oauth() -> Result<String, String> {
-    let discord_client_id = "1297308893587705877";
-    let discord_client_secret = "xyl8M_aCN0rDEbLaGAZK6OH6mi2MZNVD";
+    dotenv().ok();
+    let mut client_id: String = String::new();
+    let mut client_secret: String = String::new();
+
+    match env::var("DISCORD_CLIENT_ID") {
+        Ok(value) => {
+            client_id = value; 
+        },
+        Err(e) => println!("Couldn't read DISCORD_CLIENT_ID: {}", e),
+    };
+
+    match env::var("DISCORD_CLIENT_SECRET") {
+        Ok(value) => {
+            client_secret = value;
+        },
+        Err(e) => println!("Couldn't read DISCORD_CLIENT_SECRET: {}", e),
+    };
 
     let mut cfg = util::read_config().unwrap();
+    let discord_client_id: &str = client_id.as_str();
+    let discord_client_secret: &str = client_secret.as_str();
 
     // Return the token if it already exists
     if !cfg.discord_token.is_empty() {
@@ -534,11 +603,33 @@ pub async fn discord_oauth() -> Result<String, String> {
 }
 
 pub async fn google_oauth() -> Result<String, String> {
+<<<<<<< HEAD
+    dotenv().ok();
+    let mut client_id: String = String::new();
+    let mut client_secret: String = String::new();
+
+    match env::var("GOOGLE_CLIENT_ID") {
+        Ok(value) => {
+            client_id = value; 
+        },
+        Err(e) => println!("Couldn't read GOOGLE_CLIENT_ID: {}", e),
+    };
+
+    match env::var("GOOGLE_SECRET") {
+        Ok(value) => {
+            client_secret = value;
+        },
+        Err(e) => println!("Couldn't read GOOGLE_SECRET: {}", e),
+    };
+=======
     let google_client_id =
         "97283464398-5dp31l4s5p38tvh9m621p7954v1rm2cs.apps.googleusercontent.com";
     let google_secret = "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";
+>>>>>>> a0807deceeb6419dcfc68505aafbf6b949e09559
 
     let mut cfg = util::read_config().unwrap();
+    let google_client_id: &str = client_id.as_str();
+    let google_secret: &str = client_secret.as_str();
 
     // Return the token if it already exists
     if !cfg.google_token.is_empty() {
