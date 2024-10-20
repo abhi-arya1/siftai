@@ -4074,7 +4074,6 @@ dependencies = [
 ]
 
 [[package]]
-<<<<<<< HEAD
 name = "serde_path_to_error"
 version = "0.1.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4082,16 +4081,6 @@ checksum = "af99884400da37c88f5e9146b7f1fd0fbcae8f6eec4e9da38b67d05486f814a6"
 dependencies = [
  "itoa 1.0.11",
  "serde",
-=======
-name = "serde_qs"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0431a35568651e363364210c91983c1da5eb29404d9f0928b67d4ebcfa7d330c"
-dependencies = [
- "percent-encoding",
- "serde",
- "thiserror",
->>>>>>> 03781c1 (auth window redesign)
 ]
 
 [[package]]
