@@ -77,7 +77,7 @@ def process_repo(repo):
 
                 lowerized = filename.lower()
 
-                if filename.startswith('.') or \
+                if (filename.startswith('.') or \
                     'lock' in lowerized or \
                         'config' in lowerized or \
                             'xml' in lowerized or \
@@ -90,7 +90,17 @@ def process_repo(repo):
                             'toml' in lowerized or \
                             'svg' in lowerized or \
                             'csv' in lowerized or \
-                            'pickle' in lowerized:
+                            'pickle' in lowerized or \
+                            'ico' in lowerized or \
+                            'env' in lowerized or \
+                            'bin' in lowerized or \
+                            'csharp' in lowerized or \
+                            'target' in lowerized or \
+                            'mp4' in lowerized or \
+                            'webp' in lowerized or \
+                            'avif' in lowerized or \
+                            'woff' in lowerized or \
+                            "__init__" in lowerized):
                     continue 
 
                 print(filename)

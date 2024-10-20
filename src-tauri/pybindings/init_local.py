@@ -37,11 +37,14 @@ def parse_files(collection: chromadb.Collection, directory: Path):
     global cur_file_id, cur_img_id 
 
     for file in directory.iterdir():
-        if file.name in {"node_modules", "venv", ".venv", "__pycache__", ".git"}:
+        if file.name in {"node_modules", "venv", ".venv", "__pycache__", ".git", 'data'}:
             continue 
 
         if "test" in str(file).lower():
             continue 
+
+        if "targets" in str(file).lower():
+            continue
 
         if file.is_dir():
             if file.name.lower() in {'adobe', 'nasa_adc_all_site_build', 'onedrive - personalmicrosoftsoftware.uci.edu', "high school", 'library', 'target', 'libraries', 'lib'}:
@@ -61,9 +64,27 @@ def parse_files(collection: chromadb.Collection, directory: Path):
                 "dmg", "zip", "xls", "xlsx", "csv", "tar", "gz", "bz2", "xz", "7z", "rar", "iso", "exe", "dll", "bin",
                 "so", "obj", "class", "o", "pyc", "lock", "log", "tmp", "config", "cfg", "ini", "svg", "json", "xml", "yaml", "yml", "data"
                 "plist", "db", "db-wal", "db-shm", "mp4", "mpeg4", "mov", "avi", "mkv", "flv", "wmv", "webm", "lock", "lockb", "bin", "sh", "obj", "photosLibrary",
-                "html", "css", "timestamp", "ipynb", "env", "env.local", "ico"
+                "html", "css", "timestamp", "ipynb", "env", "env.local", "ico", "code-workspace", "rst", "sln", "img"
             ]: 
                 continue 
+
+            if "recovery" in file.name.lower():
+                continue
+
+            if "d.ts" in file.name:
+                continue
+
+            if "csharp" in file.name:
+                continue
+
+            if "xcworkspace" in file.name:
+                continue
+
+            if "__init__" in file.name:
+                continue
+
+            if "mod" in file.name:
+                continue
             
             if file.suffix[1:] in {"png", "jpg", "jpeg"}:
                 try:

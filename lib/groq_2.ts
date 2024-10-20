@@ -4,6 +4,7 @@ const MODEL = "llama3-groq-8b-8192-tool-use-preview";
 const client = new Groq({
   apiKey: "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",
 });
+
 const fileContents =
   "Everyone feels worried or anxious or down from time to time. But relatively few people develop a mental illness. What's the difference? A mental illness is a mental health condition that gets in the way of thinking, relating to others, and day-to-day function. Dozens of mental illnesses have been identified and defined. They include depression, generalized anxiety disorder, bipolar disorder, obsessive-compulsive disorder, post-traumatic stress disorder, schizophrenia, and many more. Mental illness is an equal opportunity issue. It affects young and old";
 const query = "mental illness";
