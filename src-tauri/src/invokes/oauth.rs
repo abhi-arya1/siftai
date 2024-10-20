@@ -31,8 +31,6 @@ struct GitHubUserResponse {
 #[derive(Deserialize, Debug)]
 struct GitHubAccessTokenResponse {
     access_token: String,
-    token_type: String,
-    scope: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -219,7 +217,6 @@ pub async fn slack_oauth() -> Result<String, String> {
 
     let (tx, mut rx) = tokio::sync::mpsc::channel::<String>(1);
     let html_content = include_str!("../.././auth_page.html");
-
 
     // Define the redirect route to handle the callback
     let redirect_route = warp::path!("slk_auth_callback")
@@ -625,7 +622,7 @@ pub async fn google_oauth() -> Result<String, String> {
         Err(e) => println!("Couldn't read GOOGLE_SECRET: {}", e),
     };
 
-    let mut cfg = util::read_config().unwrap();
+    let cfg = util::read_config().unwrap();
     let google_client_id: &str = &client_id.as_str();
     let google_secret: &str = &client_secret.as_str();
 
@@ -670,7 +667,6 @@ pub async fn google_oauth() -> Result<String, String> {
     tokio::spawn(server_fut);
 
     // Define the OAuth scopes required by your Slack bot
-    let scopes = "messages.read+dm_channels.read";
     let encoded_url = urlencoding::encode("http://localhost:35442/ggl_auth_callback");
 
     // Slack authorization URL with redirect_uri pointing to the Warp server

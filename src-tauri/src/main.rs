@@ -3,7 +3,7 @@
     windows_subsystem = "windows"
 )]
 
-use files::get_gh_repos;
+
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
 use tauri::{CustomMenuItem, Menu, Submenu};
@@ -12,7 +12,6 @@ use util::db_formatted_path;
 
 mod apis;
 mod chroma;
-mod files;
 mod invokes;
 mod util;
 
@@ -48,6 +47,7 @@ fn start_chroma_db() {
         &chroma::Action::GetOrCreate {
             collection_name: "siftfiles".to_string(),
         },
+        false
     )
     .expect("Failed to create Chroma database collection");
 }
@@ -55,12 +55,6 @@ fn start_chroma_db() {
 #[tauri::command]
 fn run_subprocess(command: String) -> Result<String, String> {
     invokes::run_cmd(command)
-}
-
-#[tauri::command]
-fn rungh() -> Result<String, String> {
-    get_gh_repos();
-    Ok("Fetching GitHub repositories...".to_string())
 }
 
 #[tauri::command]
@@ -101,17 +95,15 @@ fn main() {
     println!("\nBeginning Sift.AI Startup...\n");
 
     let command = format!("chroma run --path {} --port 35436", db_formatted_path());
-    // let chroma_clone = start_chroma_server(&command);
+    let _ = start_chroma_server(&command);
 
     println!("Chroma server is running in the background on http://localhost:35436.\n");
     println!("AppConfig: {:?}", app_cfg);
 
-    // start_chroma_db();
+    start_chroma_db();
     println!("Chroma database is configured.\n");
 
-    println!("Parsing files in the background...");
-    // files::parse_files();
-    // files::get_gh_repos();
+    // println!("Parsing files in the background...");
 
     println!("\nCompleted Startup Configurations\n");
 
@@ -145,8 +137,7 @@ fn main() {
             slk_oauth,
             ntn_oauth,
             disc_oauth,
-            ggl_oauth,
-            rungh
+            ggl_oauth
         ])
         .menu(Menu::new().add_submenu(submenu))
         .on_window_event(move |event| {

@@ -1,0 +1,10 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "database": "/Users/ashwa/Library/Application\\ Support/sift_datastore/chroma.sqlite3",
+            "name": "TEST"
+        }
+    ]
+}
