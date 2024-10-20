@@ -492,13 +492,8 @@ const FileExplorer = () => {
                 </button>
               </div>
 
-<<<<<<< HEAD
               <div className="space-y-2">
                 <button onClick={async () => await queryChroma('Tests')}>
-=======
-              <div className="grid grid-cols-2 gap-y-2">
-                <button onClick={async () => invoke("rungh")}>
->>>>>>> f89a55c (ux)
                   Run GitHub
                 </button>
                 <IntegrationCard

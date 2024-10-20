@@ -34,8 +34,6 @@ client = chromadb.Client(
     )
 )
 
-client.reset()
-
 coll = client.get_or_create_collection(
     name="siftfiles",
     embedding_function=embedder,
