@@ -3,6 +3,7 @@
     windows_subsystem = "windows"
 )]
 
+use files::get_gh_repos;
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
 use tauri::{CustomMenuItem, Menu, Submenu};
@@ -54,6 +55,12 @@ fn start_chroma_db() {
 #[tauri::command]
 fn run_subprocess(command: String) -> Result<String, String> {
     invokes::run_cmd(command)
+}
+
+#[tauri::command]
+fn rungh() -> Result<String, String> {
+    get_gh_repos();
+    Ok("Fetching GitHub repositories...".to_string())
 }
 
 #[tauri::command]
@@ -138,7 +145,8 @@ fn main() {
             slk_oauth,
             ntn_oauth,
             disc_oauth,
-            ggl_oauth
+            ggl_oauth,
+            rungh
         ])
         .menu(Menu::new().add_submenu(submenu))
         .on_window_event(move |event| {

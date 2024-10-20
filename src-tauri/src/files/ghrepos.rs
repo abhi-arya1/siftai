@@ -1,12 +1,12 @@
 use anyhow::{Context, Result};
 use async_recursion::async_recursion;
-use futures::{stream, StreamExt};
 use lru_cache::LruCache;
 use reqwest::{header, Client};
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+use tokio::runtime::Runtime;
 use tokio::sync::Semaphore;
 use tokio::time::sleep;
 
@@ -123,48 +123,39 @@ async fn fetch_repo_contents(
 
     let contents: Value = response.json().await?;
 
-    let file_contents = stream::iter(contents.as_array().unwrap_or(&Vec::new()).to_vec())
-        .map(|item| {
-            let client = client.clone();
-            let username = username.clone();
-            let repo = repo.clone();
-            let rate_limiter = rate_limiter.clone();
-            let cache = cache.clone();
-            async move {
-                if let (Some(path), Some(item_type)) =
-                    (item["path"].as_str(), item["type"].as_str())
-                {
-                    match item_type {
-                        "file" => {
-                            let content = fetch_file_content(
-                                client,
-                                &username,
-                                &repo,
-                                path,
-                                rate_limiter,
-                                cache,
-                            )
-                            .await?;
-                            Ok::<_, anyhow::Error>((path.to_string(), content))
-                        }
-                        "dir" => {
-                            let sub_contents =
-                                fetch_repo_contents(client, username, repo, rate_limiter, cache)
-                                    .await?;
-                            Ok((path.to_string(), sub_contents.to_string()))
-                        }
-                        _ => Ok((path.to_string(), json!(null).to_string())),
-                    }
-                } else {
-                    Ok((String::new(), json!(null).to_string()))
+    let mut file_contents = HashMap::new();
+    for item in contents.as_array().unwrap_or(&Vec::new()) {
+        if let (Some(path), Some(item_type)) = (item["path"].as_str(), item["type"].as_str()) {
+            match item_type {
+                "file" => {
+                    let content = fetch_file_content(
+                        client.clone(),
+                        &username,
+                        &repo,
+                        path,
+                        rate_limiter.clone(),
+                        cache.clone(),
+                    )
+                    .await?;
+                    file_contents.insert(path.to_string(), content);
+                }
+                "dir" => {
+                    let sub_contents = fetch_repo_contents(
+                        client.clone(),
+                        username.clone(),
+                        repo.clone(),
+                        rate_limiter.clone(),
+                        cache.clone(),
+                    )
+                    .await?;
+                    file_contents.insert(path.to_string(), sub_contents.to_string());
+                }
+                _ => {
+                    file_contents.insert(path.to_string(), json!(null).to_string());
                 }
             }
-        })
-        .buffer_unordered(MAX_CONCURRENT_REQUESTS)
-        .collect::<Vec<_>>()
-        .await;
-
-    let file_contents: HashMap<_, _> = file_contents.into_iter().filter_map(Result::ok).collect();
+        }
+    }
 
     let result = json!({
         "directory_contents": contents,
@@ -230,26 +221,20 @@ async fn fetch_github_repos_and_contents(username: &str, token: &str) -> Result<
     // Fetch repositories
     let repos = fetch_user_repos(&client, username, rate_limiter.clone(), cache.clone()).await?;
 
-    // Fetch contents for each repository concurrently
-    let repo_contents = stream::iter(repos.clone())
-        .map(|repo| {
-            let client = client.clone();
-            let username = username.to_string();
-            let rate_limiter = rate_limiter.clone();
-            let cache = cache.clone();
-            async move {
-                let repo_name = repo["name"].as_str().unwrap_or_default().to_string();
-                let contents =
-                    fetch_repo_contents(client, username, repo_name.clone(), rate_limiter, cache)
-                        .await?;
-                Ok::<_, anyhow::Error>((repo_name, contents))
-            }
-        })
-        .buffer_unordered(MAX_CONCURRENT_REQUESTS)
-        .collect::<Vec<_>>()
-        .await;
-
-    let repo_contents: HashMap<_, _> = repo_contents.into_iter().filter_map(Result::ok).collect();
+    // Fetch contents for each repository
+    let mut repo_contents = HashMap::new();
+    for repo in repos.iter() {
+        let repo_name = repo["name"].as_str().unwrap_or_default().to_string();
+        let contents = fetch_repo_contents(
+            client.clone(),
+            username.to_string(),
+            repo_name.clone(),
+            rate_limiter.clone(),
+            cache.clone(),
+        )
+        .await?;
+        repo_contents.insert(repo_name, contents);
+    }
 
     Ok(json!({
         "repos": repos,
@@ -257,7 +242,7 @@ async fn fetch_github_repos_and_contents(username: &str, token: &str) -> Result<
     }))
 }
 
-pub async fn get_gh_repos() -> Result<String> {
+pub fn get_gh_repos() -> Result<String> {
     println!("HERE");
 
     let app_cfg = load_config().unwrap();
@@ -266,7 +251,14 @@ pub async fn get_gh_repos() -> Result<String> {
 
     println!("Fetching GitHub repos and contents for user: {}", username);
 
-    let result = fetch_github_repos_and_contents(username.as_str(), token.as_str()).await?;
+    // Create a new Tokio runtime
+    let runtime = Runtime::new().context("Failed to create Tokio runtime")?;
+
+    // Run the async function to completion on the runtime
+    let result = runtime.block_on(fetch_github_repos_and_contents(
+        username.as_str(),
+        token.as_str(),
+    ))?;
     println!("{}", serde_json::to_string_pretty(&result)?);
 
     Ok("Test".to_string())

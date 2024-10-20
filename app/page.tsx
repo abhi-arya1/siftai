@@ -391,6 +391,9 @@ const FileExplorer = () => {
               </div>
 
               <div className="space-y-2">
+                <button onClick={async () => invoke('rungh')}>
+                  Run GitHub
+                </button>
                 <IntegrationCard
                   logo={IconBrandGithub}
                   name="GitHub"
