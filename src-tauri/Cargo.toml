@@ -38,18 +38,14 @@ actix-files = { version = "0.6.0-beta.16" }
 base64 = "0.13"
 actix-cors = "0.6"
 thiserror = "1.0"
-<<<<<<< HEAD
-urlencoding = "2.1.3"
 octocrab = "0.10.0"
 futures = "0.3"
 anyhow = "1.0"
 async-std = "1.10"
 async-recursion = "0.1.0"
 lru-cache = "0.1.2"
-=======
 urlencoding =  "2.1.3"
 serde_qs = "0.12.0"
->>>>>>> 03781c1 (auth window redesign)
 
 
 [features]
