@@ -89,8 +89,8 @@ const Navbar = () => {
             src="/sift_logo_dark.png"
             alt="SiftLogo"
             className="z-10 hidden dark:block hover:cursor-pointer"
-            width={40}
-            height={40}
+            width={50}
+            height={50}
             priority
             onClick={() => {
               router.push("/");
@@ -116,7 +116,7 @@ const Navbar = () => {
                   passHref
                 >
                   <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    <GithubIcon className="h-5 w-5" />
+                    Download
                   </NavigationMenuLink>
                 </Link>
               </NavigationMenuItem>
