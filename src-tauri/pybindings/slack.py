@@ -1,78 +1,122 @@
-# import slack 
-# import json
-# import requests
-# from fastapi import FastAPI
-# from slack_sdk import WebClient
-# from slack_sdk.errors import SlackApiError
-# from fastapi.testclient import TestClient
+import requests
+import chromadb
+from chromadb import Settings
+from chromadb.utils.embedding_functions.open_clip_embedding_function import OpenCLIPEmbeddingFunction
+from chromadb.utils.data_loaders import ImageLoader
+from sys import argv
+from time import time
+import requests
+import json
+import urllib.parse
 
-# import os
+# Initialize embedders and data loaders for ChromaDB
+embedder = OpenCLIPEmbeddingFunction()
+data_loader = ImageLoader()
 
-# def load_config():
-#     config_path = os.path.join(os.path.dirname(__file__), 'sift.config.json')
-#     if not os.path.exists(config_path):
-#         raise FileNotFoundError(f"Configuration file not found: {config_path}")
-#     with open(config_path, 'r') as file:
-#         config = json.load(file)
-#     return config
+# Track the starting time for performance measurement
+start = time()
 
-# config = load_config()
-# slack_token = config['slack_token']
-# app = FastAPI()
+cur_file_id = 0
 
-# # @app.post("/api/conversations.list")
-# # async def conversations_list():
-# #     url = "https://slack.com/api/conversations.list"
-# #     headers = {
-# #         "Authorization": f"Bearer {slack_token}",
-# #         "Content-Type": "application/json"
-# #     }
-# #     try:
-# #         response = requests.get(url, headers=headers)
-# #         response_data = response.json()
-# #         print(response_data)
-# #     except:
-# #         print("a")
-# #         return {"error": "Failed to fetch conversations list"}
+start = time()
+
+# Create and reset ChromaDB client
+client = chromadb.PersistentClient(
+    path="/Users/ashwa/Desktop/sift_datastore",
+)
+
+coll = client.get_or_create_collection(
+    name="siftfiles",
+    embedding_function=embedder,
+    data_loader=data_loader,
+)
+
+
+# Your Slack Bot Token
+SLACK_TOKEN = "xoxb-7906164823108-7918835233777-3TwEYUxMgbGE64epBEiZCZqJ"
+
+WORKSPACE = "watchfilesforcalhacks"
+# Slack API URLs
+CHANNEL_LIST_URL = 'https://slack.com/api/conversations.list'
+MESSAGE_HISTORY_URL = 'https://slack.com/api/conversations.history'
+
+# Function to fetch all channels in the workspace
+def fetch_all_channels():
+    headers = {
+        'Authorization': f'Bearer {SLACK_TOKEN}',
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
     
-# # @app.post("/api/conversations.history")
-# # async def conversations_history():
-# #     url = "https://slack.com/api/conversations.history"
-# #     headers = {
-# #         "Authorization": f"Bearer {slack_token}",
-# #         "Content-Type": "application/json"
-# #     }
-# #     try:
-# #         response = requests.get(url, headers=headers)
-# #         response_data = response.json()
-# #         print(response_data)
-# #     except:
-# #         print("a")
-# #         return {"error": "Failed to fetch conversations history"}
+    response = requests.get(CHANNEL_LIST_URL, headers=headers)
+    if response.status_code != 200:
+        raise Exception(f"Error fetching channels: {response.status_code} {response.text}")
     
-# #     def get_repositories():
-# #     url = f"https://api.github.com/search/repositories?q=user:{urllib.parse.quote(username)}"
-# #     req = requests.get(url, headers={
-# #         "Authorization": f"Bearer {key}",
-# #         "Accept": "application/vnd.github+json",
-# #         "X-GitHub-Api-Version": "2022-11-28"
-# #     })
-
-# #     if req.status_code != 200: 
-# #         return {"error": f"Error fetching repos: {req.text}"}
+    data = response.json()
+    if not data.get('ok'):
+        raise Exception(f"Error fetching channels: {data.get('error')}")
     
-# #     return req.json()["items"]
- 
-# def get_slack_conversations():
-#     url = "https://slack.com/api/conversations.list"
-#     req = requests.get(url, headers={
-#         "Authorization": f"Bearer {slack_token}",
-#         "Accept": "application/x-www-form-urlencoded"
-#     })
+    return data.get('channels', [])
 
-#     if req.status_code != 200: 
-#         return {"error": f"Error fetching repos: {req.text}"}
+# Function to fetch messages from a specific channel
+def fetch_channel_messages(channel_id, limit=100):
+    headers = {
+        'Authorization': f'Bearer {SLACK_TOKEN}',
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+    params = {
+        'channel': channel_id,
+        'limit': limit
+    }
     
-#     return req.json()
+    response = requests.get(MESSAGE_HISTORY_URL, headers=headers, params=params)
+    if response.status_code != 200:
+        raise Exception(f"Error fetching messages: {response.status_code} {response.text}")
+    
+    data = response.json()
+    if not data.get('ok'):
+        raise Exception(f"Error fetching messages: {data.get('error')}")
+    
+    return data.get('messages', [])
 
-# print(get_slack_conversations())
+# Function to generate a Slack message URL
+def generate_message_url(channel_id, timestamp):
+    formatted_ts = timestamp.replace('.', '')
+    return f"https://{WORKSPACE}.slack.com/archives/{channel_id}/p{formatted_ts}"
+
+# Main function to fetch channels and their messages
+def fetch_all_channel_messages():
+    channels = fetch_all_channels()
+
+    for channel in channels:
+        channel_id = channel['id']
+        channel_name = channel['name']
+
+        
+        print(f"\nFetching messages from channel: {channel_name} (ID: {channel_id})")
+        
+        try:
+            messages = fetch_channel_messages(channel_id)
+            for message in messages:
+                text = message.get('text', '[No Text]')
+                timestamp = message['ts']
+                message_url = generate_message_url(channel_id, timestamp)
+
+                if "has joined the channel" in text:
+                    continue 
+
+                global cur_file_id
+
+                coll.add(documents=[text], ids=[f"slack{cur_file_id}"], metadatas=[{
+                    "filepath": message_url,
+                    "location": "slack"
+                }])
+                
+                print(f"Message: {text}")
+                print(f"URL: {message_url}\n")
+                cur_file_id += 1
+        
+        except Exception as e:
+            print(f"Error fetching messages from {channel_name}: {str(e)}")
+
+if __name__ == "__main__":
+    fetch_all_channel_messages()
