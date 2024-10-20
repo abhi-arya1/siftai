@@ -1,13 +1,19 @@
 "use client";
-import React, { useState, useEffect, Fragment } from "react";
+import React, {
+  useCallback,
+  useState,
+  useEffect,
+  useRef,
+  Fragment,
+} from "react";
 import Image from "next/image";
 // import sift_logo from "../src-tauri/icons/sift_logo.png";
 import { Menu, Transition, Dialog } from "@headlessui/react";
 import { motion } from "framer-motion";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import GoogleIcon from '@mui/icons-material/Google';
-import { faDiscord } from '@fortawesome/free-brands-svg-icons';
-import { getClient, ResponseType } from '@tauri-apps/api/http';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import GoogleIcon from "@mui/icons-material/Google";
+import { faDiscord } from "@fortawesome/free-brands-svg-icons";
+import { getClient, ResponseType } from "@tauri-apps/api/http";
 import {
   Command,
   Search,
@@ -23,7 +29,12 @@ import {
   FileText,
   ImageIcon,
 } from "lucide-react";
-import { IconBrandGithub, IconBrandNotion, IconBrandGoogle, IconBrandDiscordFilled } from "@tabler/icons-react";
+import {
+  IconBrandGithub,
+  IconBrandNotion,
+  IconBrandGoogle,
+  IconBrandDiscordFilled,
+} from "@tabler/icons-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@nextui-org/kbd";
@@ -123,27 +134,33 @@ const FilePreview = ({ file }: { file: SearchResultItem }) => {
     const fetchContent = async () => {
       const sanitizedPath = "/Documents/random.txt";
       const fileType = getFileType(file.filename);
-      
+
       console.log(file.filename);
 
       const client = await getClient();
 
       if (fileType === "image") {
         // Fetch binary content for images
-        const response = await client.get(`http://localhost:35438/Desktop/IMG_0776.png`, {
-          responseType: ResponseType.Binary,
-        });
-        console.log(response.data)
+        const response = await client.get(
+          `http://localhost:35438/Desktop/IMG_0776.png`,
+          {
+            responseType: ResponseType.Binary,
+          },
+        );
+        console.log(response.data);
         const blob = new Blob([response.data as any], { type: "image/png" });
         const asset = URL.createObjectURL(blob);
-        console.log(asset)
+        console.log(asset);
         setImageSrc(asset);
       } else {
         // Fetch text-based files
-        const response = await client.get(`http://localhost:35438/Documents/random.txt`, {
-          responseType: ResponseType.Text,
-        });
-        console.log(response.data)
+        const response = await client.get(
+          `http://localhost:35438/Documents/random.txt`,
+          {
+            responseType: ResponseType.Text,
+          },
+        );
+        console.log(response.data);
         setContent(response.data as any);
       }
     };
@@ -173,11 +190,11 @@ const FilePreview = ({ file }: { file: SearchResultItem }) => {
           )}
         </div>
       ) : fileType === "code" ? (
-        <pre className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg overflow-auto">
+        <pre className="bg-gray-50 dark:bg-[#1f1f1f] p-4 rounded-lg overflow-auto">
           <code className="text-sm font-mono">{content}</code>
         </pre>
       ) : (
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg whitespace-pre-wrap">
+        <div className="bg-white dark:bg-[#1f1f1f] p-4 text-black dark:text-white rounded-lg whitespace-pre-wrap">
           {content}
         </div>
       )}
@@ -192,13 +209,92 @@ const FileExplorer = () => {
   const [selectedResult, setSelectedResult] = useState<SearchResultItem | null>(
     null,
   );
-  const [isIntegrationsDialogOpen, setIsIntegrationsDialogOpen] = useState(false);
+  const [isIntegrationsDialogOpen, setIsIntegrationsDialogOpen] =
+    useState(false);
   const [ghToken, setGhToken] = useState<string | null>(null);
   const [slackToken, setSlackToken] = useState<string | null>(null);
   const [discordToken, setDiscordToken] = useState<string | null>(null);
   const [notionToken, setNotionToken] = useState<string | null>(null);
   const [googleToken, setGoogleToken] = useState<string | null>(null);
   // const invoke = window.__TAURI__.invoke;
+  const [focusedArea, setFocusedArea] = useState(null);
+  const fileTreeRef = useRef(null);
+  const [focusedIndex, setFocusedIndex] = useState(0);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>, index: number) => {
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setFocusedIndex((prev) =>
+          prev > 0 ? prev - 1 : mockResults.length - 1,
+        );
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setFocusedIndex((prev) =>
+          prev < mockResults.length - 1 ? prev + 1 : 0,
+        );
+      }
+    },
+    [mockResults.length],
+  );
+
+  useEffect(() => {
+    if (mockResults[focusedIndex]) {
+      setSelectedResult(mockResults[focusedIndex]);
+    }
+  }, [focusedIndex, mockResults]);
+
+  const handleFileClick = useCallback(
+    (result: SearchResultItem, index: number) => {
+      setSelectedResult(result);
+      setFocusedIndex(index);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (focusedArea === "fileTree") {
+        handleFileTreeNavigation(e);
+      } else if (focusedArea === "actionMenu") {
+        handleActionMenuNavigation(e);
+      } else if (focusedArea === "settingsMenu") {
+        handleSettingsMenuNavigation(e);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [focusedArea, focusedIndex]);
+
+  const handleFileTreeNavigation = (e) => {
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setFocusedIndex((prev) => (prev > 0 ? prev - 1 : mockResults.length - 1));
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setFocusedIndex((prev) => (prev < mockResults.length - 1 ? prev + 1 : 0));
+    }
+  };
+
+  useEffect(() => {
+    if (focusedArea === "fileTree" && mockResults[focusedIndex]) {
+      setSelectedResult(mockResults[focusedIndex]);
+    }
+  }, [focusedIndex, focusedArea]);
+
+  const handleActionMenuNavigation = (e) => {
+    const actions = getFileActions(selectedResult?.type);
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setFocusedIndex((prev) => (prev > 0 ? prev - 1 : actions.length - 1));
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setFocusedIndex((prev) => (prev < actions.length - 1 ? prev + 1 : 0));
+    } else if (e.key === "Enter") {
+      handleMenuAction(actions[focusedIndex].id);
+    }
+  };
 
   useEffect(() => {
     if (mockResults.length > 0 && !selectedResult) {
@@ -235,7 +331,7 @@ const FileExplorer = () => {
         setDiscordToken(err as string);
       });
   };
-  
+
   const handleNotionOauth = async () => {
     invoke("ntn_oauth")
       .then((res) => {
@@ -244,7 +340,7 @@ const FileExplorer = () => {
       .catch((err) => {
         setNotionToken(err as string);
       });
-  }
+  };
 
   const handleGoogleOauth = async () => {
     invoke("ggl_oauth")
@@ -254,7 +350,7 @@ const FileExplorer = () => {
       .catch((err) => {
         setGoogleToken(err as string);
       });
-  }
+  };
 
   const [files, setFiles] = useState<string | null>(null); // Declare state to hold the files
 
@@ -324,8 +420,8 @@ const FileExplorer = () => {
       <div className="h-8 border-b border-zinc-700 flex justify-end items-center px-2">
         <Menu>
           <Menu.Button className="pl-2 rounded-lg hover:drop-shadow-xl focus:outline-none">
-            <div className="flex items-center flex-row gap-x-0.75 p-1 rounded-md bg-white dark:bg-muted hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out">
-              <Settings size={14} />
+            <div className="flex items-center flex-row gap-x-0.75 p-1 rounded-md bg-white dark:bg-[#1f1f1f] hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out">
+              <Settings className="text-black dark:text-white" size={14} />
               {/* <Image src={sift_logo} alt="settings" className="w-5 h-5" /> */}
             </div>
           </Menu.Button>
@@ -338,7 +434,7 @@ const FileExplorer = () => {
             leaveFrom="transform opacity-100 scale-100"
             leaveTo="transform opacity-0 scale-95"
           >
-            <Menu.Items className="absolute space-y-1 right-2 mt-32 w-56 origin-top-right rounded-xl border border-gray-200 dark:border-white/5 bg-white dark:bg-muted p-1 text-sm/6 text-gray-800 dark:text-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+            <Menu.Items className="absolute space-y-1 right-2 mt-32 w-56 origin-top-right rounded-xl border border-gray-200 dark:border-white/5 bg-white dark:bg-[#1f1f1f] p-1 text-sm/6 text-gray-800 dark:text-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
               <Menu.Item>
                 {({ active }) => (
                   <button
@@ -433,35 +529,40 @@ const FileExplorer = () => {
       {/* Main content area */}
       <div className="flex-1 flex overflow-hidden">
         {/* File tree view */}
-        <ScrollArea className="w-64 p-2">
+        <ScrollArea
+          className="w-64 p-2 focus:outline-none select-none"
+          ref={fileTreeRef}
+          onFocus={() => setFocusedArea("fileTree")}
+          onBlur={() => setFocusedArea(null)}
+          tabIndex="0"
+        >
           <div className="space-y-2">
-            {mockResults.map((result) => (
+            {mockResults.map((result, index) => (
               <div
                 key={result.id}
                 className={`p-3 rounded-lg cursor-pointer ${
-                  selectedResult?.id === result.id
-                    ? "bg-orange-300 dark:bg-orange-400"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                  selectedResult?.id === result.id ||
+                  (focusedArea === "fileTree" && focusedIndex === index)
+                    ? "dark:bg-orange-500 text-black"
+                    : "hover:bg-gray-100 text-white dark:hover:bg-white/10"
                 } transition-colors duration-150 ease-in-out`}
-                onClick={() => setSelectedResult(result)}
+                onClick={() => handleFileClick(result, index)}
               >
                 <div className="flex items-center space-x-3">
                   <div className="flex-shrink-0">
                     {getFileType(result.filename) === "image" ? (
-                      <ImageIcon className="w-5 h-5 text-purple-500" />
+                      <ImageIcon className="w-5 h-5" />
                     ) : getFileType(result.filename) === "code" ? (
-                      <Code className="w-5 h-5 text-blue-500" />
+                      <Code className="w-5 h-5" />
                     ) : (
-                      <FileText className="w-5 h-5 text-gray-500" />
+                      <FileText className="w-5 h-5" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    <p className="text-sm font-medium truncate">
                       {result.filename}
                     </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                      {result.abspath}
-                    </p>
+                    <p className="text-sm truncate">{result.abspath}</p>
                   </div>
                 </div>
               </div>
@@ -474,10 +575,10 @@ const FileExplorer = () => {
           {selectedResult ? (
             <>
               <div className="mb-4">
-                <h2 className="text-xl font-bold mb-2">
+                <h2 className="text-xl font-bold mb-2 dark:text-white text-black">
                   {selectedResult.filename}
                 </h2>
-                <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm">
+                <div className="bg-white dark:bg-[#1f1f1f] p-3 rounded-lg shadow-sm">
                   <p className="text-sm text-gray-600 dark:text-gray-300">
                     <strong>Path:</strong> {selectedResult.abspath}
                   </p>
@@ -487,7 +588,7 @@ const FileExplorer = () => {
                   </p>
                 </div>
               </div>
-              <div className="flex-1 overflow-hidden bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+              <div className="flex-1 overflow-hidden bg-white dark:bg-[#1f1f1f] border border-orange-500 rounded-lg shadow-sm">
                 <FilePreview file={selectedResult} />
               </div>
             </>
@@ -515,7 +616,7 @@ const FileExplorer = () => {
           >
             <Menu.Items
               static
-              className="w-[280px] origin-bottom rounded-lg border p-1 text-sm items-center shadow-lg border border-gray-200 dark:border-white/5 focus:outline-none dark:bg-muted bg-white dark:text-white text-zinc-900"
+              className="w-[280px] origin-bottom rounded-lg border p-1 text-sm items-center shadow-lg border-gray-200 dark:border-white/5 focus:outline-none dark:bg-[#1f1f1f] bg-white dark:text-white text-zinc-900"
             >
               <div className="px-3 py-2 text-xs font-medium opacity-50">
                 Actions for {selectedResult?.filename || "selected file"}
@@ -533,7 +634,7 @@ const FileExplorer = () => {
                         <span className="select-none justify-start">
                           {action.label}
                         </span>
-                        <kbd className="px-1.5 py-0.5 text-[12px] font-medium rounded border dark:bg-muted dark:border-muted-foreground dark:text-white bg-zinc-100 border-zinc-200 text-zinc-500">
+                        <kbd className="px-1.5 py-0.5 text-[12px] font-medium rounded border dark:bg-[#1f1f1f] dark:border-muted-foreground dark:text-white bg-zinc-100 border-zinc-200 text-zinc-500">
                           {action.shortcut}
                         </kbd>
                       </button>
@@ -554,7 +655,7 @@ const FileExplorer = () => {
               <span className="select-none dark:text-zinc-400 text-zinc-600">
                 {action}
               </span>
-              <kbd className="select-none px-1.5 py-0.5 text-[12px] font-medium rounded border dark:bg-muted dark:border-muted-foreground dark:text-white text-zinc-400">
+              <kbd className="select-none px-1.5 py-0.5 text-[12px] font-medium rounded border dark:bg-[#1f1f1f] dark:border-muted-foreground dark:text-white text-zinc-400">
                 {["⌘ K"][i]}
               </kbd>
             </span>
@@ -566,7 +667,7 @@ const FileExplorer = () => {
           Hello World
           <div>{files}</div>
         </button> */}
-        <div className="h-12 border-t flex px-1.5 items-center gap-2">
+        <div className="h-12 flex px-1.5 items-center gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
             <Input
