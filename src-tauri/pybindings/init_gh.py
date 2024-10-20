@@ -1,4 +1,5 @@
 import chromadb 
+from chromadb import Settings
 from chromadb.utils.embedding_functions.open_clip_embedding_function import OpenCLIPEmbeddingFunction
 from chromadb.utils.data_loaders import ImageLoader
 from sys import argv 
@@ -15,7 +16,7 @@ data_loader = ImageLoader()
 start = time() 
 
 # chroma dir = argv[1] (path to persistent directory)
-appdata_dir = argv[2]  # Path to appdata (credentials JSON)
+appdata_dir = "/Users/ashwa/Desktop/sift.config.json"  # Path to appdata (credentials JSON)
 
 with open(appdata_dir, 'r') as jf:
     data = json.load(jf)
@@ -26,12 +27,8 @@ username = data["github_username"]
 cur_file_id = 0
 
 # Create and reset ChromaDB client
-client = chromadb.Client(
-    settings=chromadb.Settings(
-        is_persistent=True,
-        persist_directory=argv[1],
-        allow_reset=True
-    )
+client = chromadb.PersistentClient(
+    path="/Users/ashwa/Desktop/sift_datastore",
 )
 
 
@@ -91,7 +88,9 @@ def process_repo(repo):
                             'jpg' in lowerized or \
                             'jpeg' in lowerized or \
                             'toml' in lowerized or \
-                            'svg' in lowerized:
+                            'svg' in lowerized or \
+                            'csv' in lowerized or \
+                            'pickle' in lowerized:
                     continue 
 
                 print(filename)
@@ -138,7 +137,6 @@ def embed_file_to_chromadb(filename, file_path, file_content):
         documents=[file_content],
         ids=[f"gh{cur_file_id}"],
         metadatas=[{
-            'extension': filename.split('.')[-1],
             'filepath': file_path,
             "location": "github"
         }]
@@ -156,6 +154,8 @@ def gh_pipeline():
     for repo in repos:
         print(f"Processing {repo['name']}...")
         process_repo(repo)
+
+    print("Complete!")
 
 
 gh_pipeline()

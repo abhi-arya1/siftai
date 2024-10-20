@@ -11,11 +11,8 @@ data_loader = ImageLoader()
 
 start = time() 
 
-client = chromadb.Client(
-    settings=chromadb.Settings(
-        is_persistent=True,
-        persist_directory="/Users/ashwa/Application\\ Support/sift_datastore",
-    )
+client = chromadb.PersistentClient(
+    path="/Users/ashwa/Desktop/sift_datastore"
 )
 
 app = fastapi.FastAPI()

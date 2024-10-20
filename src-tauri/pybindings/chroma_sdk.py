@@ -18,14 +18,9 @@ db_path = argv[1]
 
 embedder = OpenCLIPEmbeddingFunction()
 data_loader = ImageLoader()
-client = chromadb.Client(
-    settings=Settings(
-        is_persistent=True,
-        persist_directory=db_path,
-        allow_reset=True
-    )
+client = chromadb.PersistentClient(
+    path="/Users/ashwa/Desktop/sift_datastore",
 )
-
 
 def parse_file_metadata(metadata_string):
     # Define a regex pattern to extract key-value pairs

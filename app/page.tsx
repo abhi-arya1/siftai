@@ -41,7 +41,7 @@ import { Input } from "@/components/ui/input";
 import { Kbd } from "@nextui-org/kbd";
 import { cn } from "@/lib/utils";
 import { invoke } from "@tauri-apps/api/tauri";
-import { queryChroma } from "@/lib/chromalib";
+import { queryChroma, ChromaFile } from "@/lib/chromalib";
 
 type SearchResultItem = {
   id: number;
@@ -226,6 +226,18 @@ const FileExplorer = () => {
   const [focusedArea, setFocusedArea] = useState(null);
   const fileTreeRef = useRef(null);
   const [focusedIndex, setFocusedIndex] = useState(0);
+
+  const [allfiles, setAllFiles] = useState<ChromaFile[]>([]);
+  
+
+  useEffect(() => {
+    const fetchFiles = async () => {
+      const files = await queryChroma(searchQuery);
+      setAllFiles(files);
+    };
+
+    fetchFiles();
+  }, [searchQuery]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>, index: number) => {
@@ -493,9 +505,6 @@ const FileExplorer = () => {
               </div>
 
               <div className="space-y-2">
-                <button onClick={async () => await queryChroma('Tests')}>
-                  Run GitHub
-                </button>
                 <IntegrationCard
                   logo={IconBrandGithub}
                   name="GitHub"
@@ -543,22 +552,22 @@ const FileExplorer = () => {
           tabIndex="0"
         >
           <div className="space-y-2">
-            {mockResults.map((result, index) => (
+            {allfiles.map((file, index) => (
               <div
-                key={result.id}
+                key={file.id}
                 className={`p-3 rounded-lg cursor-pointer ${
-                  selectedResult?.id === result.id ||
+                  selectedResult?.id === file.id ||
                   (focusedArea === "fileTree" && focusedIndex === index)
                     ? "bg-orange-500 text-black"
                     : "hover:bg-gray-100 text-black dark:text-white dark:hover:bg-white/10"
                 } transition-colors duration-150 ease-in-out`}
-                onClick={() => handleFileClick(result, index)}
+                onClick={() => handleFileClick(file.metadata.location, index)}
               >
                 <div className="flex items-center space-x-3">
                   <div className="flex-shrink-0">
-                    {getFileType(result.filename) === "image" ? (
+                    {getFileType(file.metadata.filepath) === "image" ? (
                       <ImageIcon className="w-5 h-5" />
-                    ) : getFileType(result.filename) === "code" ? (
+                    ) : getFileType(file.metadata.filepath) === "code" ? (
                       <Code className="w-5 h-5" />
                     ) : (
                       <FileText className="w-5 h-5" />
@@ -566,9 +575,9 @@ const FileExplorer = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">
-                      {result.filename}
+                      {file.metadata.filepath}
                     </p>
-                    <p className="text-sm truncate">{result.abspath}</p>
+                    <p className="text-sm truncate">{file.metadata.filepath}</p>
                   </div>
                 </div>
               </div>

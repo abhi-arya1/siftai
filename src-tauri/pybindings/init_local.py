@@ -8,7 +8,6 @@ from pathlib import Path
 import os 
 from time import time 
 import PyPDF2
-from sys import argv 
 import docx
 
 embedder = OpenCLIPEmbeddingFunction()
@@ -16,15 +15,13 @@ data_loader = ImageLoader()
 
 start = time() 
 
-client = chromadb.Client(
-    settings=Settings(
-        is_persistent=True,
-        persist_directory=argv[1],
-        allow_reset=True
-    )
+client = chromadb.PersistentClient(
+    path="/Users/ashwa/Desktop/sift_datastore",
 )
 
 # client.reset()
+
+# print("RESET")
 
 coll = client.get_or_create_collection(
     name="siftfiles",
@@ -43,8 +40,11 @@ def parse_files(collection: chromadb.Collection, directory: Path):
         if file.name in {"node_modules", "venv", ".venv", "__pycache__", ".git"}:
             continue 
 
+        if "test" in str(file).lower():
+            continue 
+
         if file.is_dir():
-            if file.name.lower() in {'adobe', 'nasa_adc_all_site_build', 'onedrive - personalmicrosoftsoftware.uci.edu', "high school", 'library', 'libraries', 'lib'}:
+            if file.name.lower() in {'adobe', 'nasa_adc_all_site_build', 'onedrive - personalmicrosoftsoftware.uci.edu', "high school", 'library', 'target', 'libraries', 'lib'}:
                 continue
 
             if file.name.startswith('.'):
@@ -59,7 +59,7 @@ def parse_files(collection: chromadb.Collection, directory: Path):
 
             if file.suffix[1:] in [
                 "dmg", "zip", "xls", "xlsx", "csv", "tar", "gz", "bz2", "xz", "7z", "rar", "iso", "exe", "dll", "bin",
-                "so", "obj", "class", "o", "pyc", "lock", "log", "tmp", "config", "cfg", "ini",
+                "so", "obj", "class", "o", "pyc", "lock", "log", "tmp", "config", "cfg", "ini", "svg", "json", "xml", "yaml", "yml", "data"
                 "plist", "db", "db-wal", "db-shm", "mp4", "mpeg4", "mov", "avi", "mkv", "flv", "wmv", "webm", "lock", "lockb", "bin", "sh", "obj", "photosLibrary"
             ]: 
                 continue 
@@ -71,8 +71,7 @@ def parse_files(collection: chromadb.Collection, directory: Path):
                     image_id = f"img{cur_img_id}"
                     image_metadata = {
                         "filepath": path,
-                        "extension": file.suffix[1:],
-                        "size": file.stat().st_size
+                        "location": "local"
                     }
 
                     collection.add(images=[image], ids=[image_id], metadatas=[image_metadata])
@@ -94,27 +93,11 @@ def parse_files(collection: chromadb.Collection, directory: Path):
 
                 file_id = f"pdf{cur_file_id}" 
                 file_metadata = {
-                    "filepath": path,
-                    "extension": file.suffix[1:],
-                    "size": file.stat().st_size
-                }
+                        "filepath": path,
+                        "location": "local"
+                    }
                 collection.add(documents=[extracted_text], ids=[file_id], metadatas=[file_metadata]) 
                 cur_file_id += 1 
-
-            elif file.suffix[1:] == "docx":
-                doc = docx.Document(file)
-                full_text = []
-                for paragraph in doc.paragraphs:
-                    full_text.append(paragraph.text)
-                full_text = "\n".join(full_text)
-                file_id = f"docx{cur_file_id}"
-                file_metadata = {
-                    "filepath": path,
-                    "extension": file.suffix[1:],
-                    "size": file.stat().st_size
-                }
-                collection.add(documents=[full_text], ids=[file_id], metadatas=[file_metadata])
-                cur_file_id += 1
 
             else: 
                 try:
@@ -122,8 +105,7 @@ def parse_files(collection: chromadb.Collection, directory: Path):
                     file_id = f"txt{cur_file_id}"
                     file_metadata = {
                         "filepath": path,
-                        "extension": file.suffix[1:],
-                        "size": file.stat().st_size
+                        "location": "local"
                     }
 
                     collection.add(documents=[file_content], ids=[file_id], metadatas=[file_metadata])
@@ -138,7 +120,7 @@ print("Starting Parse")
 
 
 documents_dir = Path(os.environ.get("HOME")) / "Documents"
-downloads_dir = Path(os.environ.get("HOME")) / "Downloads"
+desktop = Path(os.environ.get("HOME")) / "Desktop"
 
 
 if documents_dir.exists():
@@ -146,14 +128,14 @@ if documents_dir.exists():
     parse_files(coll, documents_dir)
 
 
-if downloads_dir.exists():
-    print("Parsing Downloads directory...")
-    parse_files(coll, downloads_dir)
+if desktop.exists():
+    print("Parsing Desktop directory...")
+    parse_files(coll, desktop)
 
 print("Done with file parse")
 
 print("Time taken: ", time() - start)
 
 
-results = coll.query(query_texts=["What are iterators and algorithms in Python"], n_results=5)
-print(results)
+# results = coll.query(query_texts=["What are iterators and algorithms in Python"], n_results=5)
+# print(results)

@@ -5,9 +5,9 @@
 
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
+use std::thread;
 use tauri::{CustomMenuItem, Menu, Submenu};
 use tokio::signal;
-use std::thread; 
 use util::{config_path, db_formatted_path};
 
 mod apis;
@@ -73,10 +73,9 @@ fn start_chroma_query_agent() -> Arc<Mutex<std::process::Child>> {
 fn init_local_files() -> Arc<Mutex<std::process::Child>> {
     let proc = Arc::new(Mutex::new(
         Command::new("python3")
-        .arg("./pybindings/init_local.py")
-        .arg(db_formatted_path().to_string())
-        .spawn()
-        .expect("Failed to startup local files")
+            .arg("./pybindings/init_local.py")
+            .spawn()
+            .expect("Failed to startup local files"),
     ));
 
     let _ = Arc::clone(&proc);
@@ -86,18 +85,14 @@ fn init_local_files() -> Arc<Mutex<std::process::Child>> {
 fn init_gh_files() -> Arc<Mutex<std::process::Child>> {
     let proc = Arc::new(Mutex::new(
         Command::new("python3")
-        .arg("./pybindings/init_gh.py")
-        .arg(db_formatted_path().to_string())
-        .arg(config_path().display().to_string())
-        .spawn()
-        .expect("Failed to startup local files")
+            .arg("./pybindings/init_gh.py")
+            .spawn()
+            .expect("Failed to startup local files"),
     ));
 
     let _ = Arc::clone(&proc);
     proc
 }
-
-
 
 #[tauri::command]
 fn run_subprocess(command: String) -> Result<String, String> {
@@ -146,7 +141,7 @@ fn main() {
     let app_cfg = util::load_config().unwrap();
     println!("\nBeginning Sift.AI Startup...\n");
 
-    let command = format!("chroma run --path {} --port 35436", db_formatted_path());
+    let command = "chroma run --path /Users/ashwa/Desktop/sift_datastore --port 35436".to_string();
     let _ = start_chroma_server(&command);
 
     println!("Chroma server is running in the background on http://localhost:35436.\n");
@@ -157,22 +152,21 @@ fn main() {
 
     println!("Instantiating File Cache\n");
 
-    let local_handle = thread::spawn(|| {
-        init_local_files();
-        println!("Local files are initialized.\n");
-    });
+    // let local_handle = thread::spawn(|| {
+    //     init_local_files();
+    //     println!("Local files are initialized.\n");
+    // });
 
-    let gh_handle = thread::spawn(|| {
-        init_gh_files();
-        println!("GitHub files are initialized.\n");
-    });
+    // let gh_handle = thread::spawn(|| {
+    //     init_gh_files();
+    //     println!("GitHub files are initialized.\n");
+    // });
 
-    // Join the threads to ensure both complete
-    local_handle.join().expect("Failed to initialize local files");
-    gh_handle.join().expect("Failed to initialize GitHub files");
+    // // Join the threads to ensure both complete
+    // local_handle.join().expect("Failed to initialize local files");
+    // gh_handle.join().expect("Failed to initialize GitHub files");
 
     println!("Both tasks are completed.");
-
 
     let _ = start_chroma_query_agent();
     println!("Running Chroma Query Agent on http://localhost:35443...\n");

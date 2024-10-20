@@ -40,14 +40,15 @@ pub fn db_formatted_path() -> String {
 }
 
 pub fn config_path() -> PathBuf {
-    if let Some(mut cfg_pt) = config_dir() {
-        cfg_pt = cfg_pt.join("sift.config.json");
-        cfg_pt
-        // println!("Config path: {}", cfg_pt.display());
-    } else {
-        println!("Failed to get config directory");
-        PathBuf::new()
-    }
+    // if let Some(mut cfg_pt) = config_dir() {
+    //     cfg_pt = cfg_pt.join("sift.config.json");
+    //     cfg_pt
+    //     // println!("Config path: {}", cfg_pt.display());
+    // } else {
+    //     println!("Failed to get config directory");
+    //     PathBuf::new()
+    // }
+    PathBuf::from("/Users/ashwa/Desktop/sift.config.json")
 }
 
 pub fn write_config(cfg: AppConfig) -> Result<(), Box<dyn Error>> {
