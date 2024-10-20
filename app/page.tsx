@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Menu, Transition, Dialog } from "@headlessui/react";
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import GoogleIcon from '@mui/icons-material/Google';
 import { faDiscord } from '@fortawesome/free-brands-svg-icons';
 import { getClient, ResponseType } from '@tauri-apps/api/http';
 import {
@@ -415,7 +416,7 @@ const FileExplorer = () => {
                   onClick={handleDiscordOauth}
                 />
                 <IntegrationCard
-                  logo={IconBrandGoogle}
+                  logo={GoogleIcon}
                   name="Google"
                   isAuthenticated={!!googleToken}
                   onClick={handleGoogleOauth}
