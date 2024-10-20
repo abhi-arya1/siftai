@@ -329,10 +329,11 @@ pub async fn notion_oauth() -> Result<String, String> {
     // Spawn the Warp server
     tokio::spawn(server_fut);
 
-    // Notion authorization URL with redirect_uri pointing to the Warp server
-    open_url(
-        "https://api.notion.com/v1/oauth/authorize?client_id=124d872b-594c-801e-bef4-00371de7fd49&response_type=code&owner=user&redirect_uri=http%3A%2F%2Flocalhost%3A35441%2Fntn_oauth_callback".to_string()
+    let auth_url = format!("https://api.notion.com/v1/oauth/authorize?client_id={}&response_type=code&owner=user&redirect_uri=http%3A%2F%2Flocalhost%3A35441%2Fntn_oauth_callback",
+        notion_client_id,
     );
+
+    open_url(auth_url);
 
     // Wait for the authorization code from the callback
     let notion_auth_code = match rx.recv().await {
@@ -447,7 +448,7 @@ pub async fn discord_oauth() -> Result<String, String> {
     tokio::spawn(server_fut);
 
     // Define the OAuth scopes required by your Slack bot
-    let scopes = "messages.read+dm_channels.read";
+    // let scopes = "identify%20messages.read+dm_channels.read";
     let encoded_url = urlencoding::encode("https://localhost:35440/disc_auth_callback");
 
     // Slack authorization URL with redirect_uri pointing to the Warp server
@@ -519,8 +520,6 @@ pub async fn discord_oauth() -> Result<String, String> {
         Err(format!("Error: Unable to get access token. {}", error_text))
     }
 }
-
-
 
 pub async fn google_oauth() -> Result<String, String> {
     let google_client_id = "97283464398-5dp31l4s5p38tvh9m621p7954v1rm2cs.apps.googleusercontent.com";
