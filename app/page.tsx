@@ -305,35 +305,8 @@ const FileExplorer = () => {
       });
   };
 
-<<<<<<< HEAD
   const getFileActions = (fileType: string) => {
     return actionSchema[fileType] || actionSchema.default;
-=======
-  const [files, setFiles] = useState<string | null>(null); // Declare state to hold the files
-
-  const getFileActions = (fileType: any) => {
-    const commonActions = [
-      { id: "copy", label: "Copy", shortcut: "⌘ C" },
-      { id: "delete", label: "Delete", shortcut: "⌘ ⌫" },
-    ];
-
-    const typeSpecificActions = {
-      pdf: [
-        { id: "open", label: "Open in PDF viewer", shortcut: "⌘O" },
-        { id: "extract", label: "Extract Text", shortcut: "⌘E" },
-      ],
-      markdown: [
-        { id: "preview", label: "Toggle Preview", shortcut: "⌘P" },
-        { id: "export", label: "Export as PDF", shortcut: "⌘⇧E" },
-      ],
-    };
-
-    return [
-      ...commonActions,
-      ...(typeSpecificActions[fileType as keyof typeof typeSpecificActions] ||
-        []),
-    ];
->>>>>>> 5e9330d (landing page)
   };
 
   useEffect(() => {
