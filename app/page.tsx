@@ -7,6 +7,7 @@ import React, {
   Fragment,
 } from "react";
 import Image from "next/image";
+import SearchBox from "./search_box";
 // import sift_logo from "../src-tauri/icons/sift_logo.png";
 import { Menu, Transition, Dialog } from "@headlessui/react";
 import { motion } from "framer-motion";
@@ -547,8 +548,8 @@ const FileExplorer = () => {
                 className={`p-3 rounded-lg cursor-pointer ${
                   selectedResult?.id === result.id ||
                   (focusedArea === "fileTree" && focusedIndex === index)
-                    ? "dark:bg-orange-500 text-black"
-                    : "hover:bg-gray-100 text-white dark:hover:bg-white/10"
+                    ? "bg-orange-500 text-black"
+                    : "hover:bg-gray-100 text-black dark:text-white dark:hover:bg-white/10"
                 } transition-colors duration-150 ease-in-out`}
                 onClick={() => handleFileClick(result, index)}
               >
@@ -651,7 +652,7 @@ const FileExplorer = () => {
 
         {/* Action shortcuts bar */}
         <div className="h-8 select-none px-4 flex items-center justify-end space-x-4 text-xs">
-          {["Actions"].map((action, i) => (
+          {["Actions", "Accept Suggestions"].map((action, i) => (
             <span
               key={action}
               className="select-none flex items-center justify-end gap-2"
@@ -660,7 +661,7 @@ const FileExplorer = () => {
                 {action}
               </span>
               <kbd className="select-none px-1.5 py-0.5 text-[12px] font-medium rounded border dark:bg-[#1f1f1f] dark:border-muted-foreground dark:text-white text-zinc-400">
-                {["⌘ K"][i]}
+                {["⌘ K", "Tab"][i]}
               </kbd>
             </span>
           ))}
@@ -672,16 +673,7 @@ const FileExplorer = () => {
           <div>{files}</div>
         </button> */}
         <div className="h-12 flex px-1.5 items-center gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-            <Input
-              type="text"
-              placeholder="Search files..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 dark:bg-zinc-800 dark:border-zinc-700 bg-zinc-50 border-zinc-200 rounded-lg text-zinc-500 dark:text-zinc-400 focus:ring-0 focus:border-zinc-200 dark:focus:border-zinc-700"
-            />
-          </div>
+          <SearchBox onSearch={(query) => setSearchQuery(query)} />
         </div>
       </div>
     </div>
