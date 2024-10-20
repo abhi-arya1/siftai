@@ -86,7 +86,7 @@ const Navbar = () => {
             }}
           />
           <Image
-            src="/sift_logo.png"
+            src="/sift_logo_dark.png"
             alt="SiftLogo"
             className="z-10 hidden dark:block hover:cursor-pointer"
             width={40}
