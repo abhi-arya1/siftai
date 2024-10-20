@@ -28,7 +28,7 @@ image = asarray(image)
 
 coll.add(
     images=[image],
-    ids=["img1"],
+    ids=["img2"],
     metadatas=[{"path": "/Users/ashwa/Desktop/IMG_0776.png"}]
 )
 
@@ -37,9 +37,9 @@ coll.add(
 def query_text():
     try:
         coll_name = "siftfiles"
-        query_text = "SpaceX"
+        query_text = "react"
         n_results = 1
-        collection = client.get_or_create_collection(name=coll_name)
+        collection = client.get_or_create_collection(name=coll_name, embedding_function=embedder, data_loader=data_loader)
         results = collection.query(query_texts=[query_text], n_results=n_results)
 
         print(results) 
