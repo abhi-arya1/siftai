@@ -226,17 +226,20 @@ pub async fn slack_oauth() -> Result<String, String> {
         .and(warp::query::<std::collections::HashMap<String, String>>())
         .and(warp::any().map(move || tx.clone())) // Move tx into the warp handler
         .and_then(
-            |params: std::collections::HashMap<String, String>,
-             tx: tokio::sync::mpsc::Sender<String>| async move {
-                if let Some(code) = params.get("code") {
-                    tx.send(code.clone()) // Send the code to the main handler
-                        .await
-                        .map_err(|e| warp::reject::custom(OAuthError(e.to_string())))?;
-                    Ok::<_, warp::Rejection>(warp::reply::html(html_content))
-                } else {
-                    Err(warp::reject::custom(OAuthError(
-                        "No code parameter found".to_string(),
-                    )))
+            move |params: std::collections::HashMap<String, String>,
+             tx: tokio::sync::mpsc::Sender<String>| {
+                let html_content = html_content.clone();
+                async move {
+                    if let Some(code) = params.get("code") {
+                        tx.send(code.clone()) // Send the code to the main handler
+                            .await
+                            .map_err(|e| warp::reject::custom(OAuthError(e.to_string())))?;
+                        Ok::<_, warp::Rejection>(warp::reply::html(html_content))
+                    } else {
+                        Err(warp::reject::custom(OAuthError(
+                            "No code parameter found".to_string(),
+                        )))
+                    }
                 }
             },
         );
@@ -363,8 +366,9 @@ pub async fn notion_oauth() -> Result<String, String> {
         .and(warp::query::<std::collections::HashMap<String, String>>())
         .and(warp::any().map(move || tx.clone())) // Move tx into the warp handler
         .and_then(
-            |params: std::collections::HashMap<String, String>,
+            move |params: std::collections::HashMap<String, String>,
              tx: tokio::sync::mpsc::Sender<String>| async move {
+                let html_content = html_content.clone();
                 if let Some(code) = params.get("code") {
                     println!("Received code: {}", code);
                     tx.send(code.clone()) // Send the code to the main handler
@@ -498,8 +502,9 @@ pub async fn discord_oauth() -> Result<String, String> {
         .and(warp::query::<std::collections::HashMap<String, String>>())
         .and(warp::any().map(move || tx.clone())) // Move tx into the warp handler
         .and_then(
-            |params: std::collections::HashMap<String, String>,
+            move |params: std::collections::HashMap<String, String>,
              tx: tokio::sync::mpsc::Sender<String>| async move {
+                let html_content = html_content.clone();
                 if let Some(code) = params.get("code") {
                     tx.send(code.clone()) // Send the code to the main handler
                         .await
@@ -630,21 +635,21 @@ pub async fn google_oauth() -> Result<String, String> {
     }
 
     let (tx, mut rx) = tokio::sync::mpsc::channel::<String>(1);
-
+    let html_content = include_str!("../.././auth_page.html");
+    
     // Define the redirect route to handle the callback
     let redirect_route = warp::path!("ggl_auth_callback")
         .and(warp::query::<std::collections::HashMap<String, String>>())
         .and(warp::any().map(move || tx.clone())) // Move tx into the warp handler
         .and_then(
-            |params: std::collections::HashMap<String, String>,
+            move |params: std::collections::HashMap<String, String>,
              tx: tokio::sync::mpsc::Sender<String>| async move {
+                let html_content = html_content.clone();
                 if let Some(code) = params.get("code") {
                     tx.send(code.clone()) // Send the code to the main handler
                         .await
                         .map_err(|e| warp::reject::custom(OAuthError(e.to_string())))?;
-                    Ok::<_, warp::Rejection>(warp::reply::html(
-                        "Authorization successful! You can close this window.",
-                    ))
+                    Ok::<_, warp::Rejection>(warp::reply::html(html_content))
                 } else {
                     Err(warp::reject::custom(OAuthError(
                         "No code parameter found".to_string(),
