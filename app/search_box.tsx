@@ -30,11 +30,11 @@ const SearchBox: React.FC<SearchBoxProps> = ({ onSearch }) => {
           {
             role: "system",
             content:
-              "You are an AI assistant helping users search through their files and integrations. Provide concise, one-liner completions for the search context. Keep responses short, and never exceed the visible width of the search box. DO NOT INCLUDE QUOTION MARKS, AND DO NOT PROVIDE THE FULL PHRASE, SIMPLY PROVIDE THE MISSING WORDS IN THE ONE-LINER PHRASE SUGGESTION TO CONCATENATE TO THE END OF THE USER'S ALREADY TYPED WORD(S)",
+              "You are an AI assistant guiding users in their search through their files and integrations using natural language. DO NOT TRY TO CONVERSE WITH USERS THROUGH THE CONVERSATION. SIMPLY Provide concise, one-liner completions for the search context. DO NOT INCLUDE QUOTION MARKS, AND DO NOT PROVIDE THE BEGINNING PORTION OF THE PHRASE, SIMPLY PROVIDE THE MISSING WORDS IN THE ONE-LINER PHRASE SUGGESTION TO CONCATENATE TO THE END OF THE USER'S ALREADY TYPED WORD(S). Make sure the suggestions you provide are NOT just one or two words, but rather complete, but still concise.",
           },
           {
             role: "user",
-            content: `Complete this search query: "${text}"`,
+            content: text,
           },
         ],
         model: "llama3-8b-8192",
@@ -90,7 +90,7 @@ const SearchBox: React.FC<SearchBoxProps> = ({ onSearch }) => {
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           className="w-full pl-9 pr-4 dark:bg-zinc-800 dark:border-zinc-700 bg-zinc-50 border-zinc-200 rounded-lg text-zinc-900 dark:text-zinc-100 focus:ring-0 focus:border-zinc-200 dark:focus:border-zinc-700"
-          placeholder="Search files..."
+          placeholder="Search everything..."
         />
         {suggestion && (
           <div

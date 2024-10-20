@@ -658,7 +658,7 @@ const FileExplorer = () => {
 
         {/* Action shortcuts bar */}
         <div className="h-8 select-none px-4 flex items-center justify-end space-x-4 text-xs">
-          {["Actions", "Accept Suggestions"].map((action, i) => (
+          {["Accept Suggestions", "Actions"].map((action, i) => (
             <span
               key={action}
               className="select-none flex items-center justify-end gap-2"
@@ -667,7 +667,7 @@ const FileExplorer = () => {
                 {action}
               </span>
               <kbd className="select-none px-1.5 py-0.5 text-[12px] font-medium rounded border dark:bg-[#1f1f1f] dark:border-muted-foreground dark:text-white text-zinc-400">
-                {["⌘ K", "Tab"][i]}
+                {["Tab", "⌘ K"][i]}
               </kbd>
             </span>
           ))}
