@@ -5,9 +5,9 @@
 
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
-use tauri::{AppHandle, CustomMenuItem, Menu, Submenu};
+use tauri::{CustomMenuItem, Menu, Submenu};
 use tokio::signal;
-use util::db_formatted_path;
+use util::{config_path, db_formatted_path};
 
 mod apis;
 mod chroma;
@@ -69,6 +69,35 @@ fn start_chroma_query_agent() -> Arc<Mutex<std::process::Child>> {
     chrqr
 }
 
+fn init_local_files() -> Arc<Mutex<std::process::Child>> {
+    let proc = Arc::new(Mutex::new(
+        Command::new("python3")
+        .arg("./pybindings/init_local.py")
+        .arg(db_formatted_path().to_string())
+        .spawn()
+        .expect("Failed to startup local files")
+    ));
+
+    let _ = Arc::clone(&proc);
+    proc
+}
+
+fn init_gh_files() -> Arc<Mutex<std::process::Child>> {
+    let proc = Arc::new(Mutex::new(
+        Command::new("python3")
+        .arg("./pybindings/init_gh.py")
+        .arg(db_formatted_path().to_string())
+        .arg(config_path().display().to_string())
+        .spawn()
+        .expect("Failed to startup local files")
+    ));
+
+    let _ = Arc::clone(&proc);
+    proc
+}
+
+
+
 #[tauri::command]
 fn run_subprocess(command: String) -> Result<String, String> {
     invokes::run_cmd(command)
@@ -124,6 +153,13 @@ fn main() {
 
     start_chroma_db();
     println!("Chroma database is configured.\n");
+
+    println!("Instantiating File Cache\n");
+    init_local_files();
+    println!("Local files are initialized.\n");
+    init_gh_files();
+    println!("GitHub files are initialized.\n");
+    
 
     let _ = start_chroma_query_agent();
     println!("Running Chroma Query Agent on http://localhost:35443...\n");
