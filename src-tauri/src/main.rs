@@ -101,12 +101,12 @@ fn main() {
     println!("\nBeginning Sift.AI Startup...\n");
 
     let command = format!("chroma run --path {} --port 35436", db_formatted_path());
-    let chroma_clone = start_chroma_server(&command);
+    // let chroma_clone = start_chroma_server(&command);
 
     println!("Chroma server is running in the background on http://localhost:35436.\n");
     println!("AppConfig: {:?}", app_cfg);
 
-    start_chroma_db();
+    // start_chroma_db();
     println!("Chroma database is configured.\n");
 
     println!("Parsing files in the background...");
@@ -152,11 +152,11 @@ fn main() {
         .on_window_event(move |event| {
             if let tauri::WindowEvent::CloseRequested { .. } = event.event() {
                 println!("Closing Chroma server...");
-                if let Ok(mut chroma) = chroma_clone.lock() {
-                    if let Err(e) = chroma.kill() {
-                        eprintln!("Failed to kill Chroma server: {}", e);
-                    }
-                }
+                // if let Ok(mut chroma) = chroma_clone.lock() {
+                //     if let Err(e) = chroma.kill() {
+                //         eprintln!("Failed to kill Chroma server: {}", e);
+                //     }
+                // }
                 println!("Goodbye from Sift.AI");
             }
         })
