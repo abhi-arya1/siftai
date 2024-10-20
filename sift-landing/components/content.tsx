@@ -1,15 +1,7 @@
 "use client";
 import Image from "next/image";
 import { BentoGrid, BentoCard } from "@/components/ui/bento-grid";
-import {
-  CheckIcon,
-  ChevronRightIcon,
-  DatabaseZap,
-  Laptop,
-  PlugZap,
-  TrendingUpIcon,
-  Cloud,
-} from "lucide-react";
+import { PlugZap, LockKeyhole, Blend, SearchCheck } from "lucide-react";
 import Marquee from "@/components/ui/marquee";
 import { FcGoogle } from "react-icons/fc";
 import { SiSlack, SiDiscord, SiGoogle, SiNotion } from "react-icons/si";
@@ -32,7 +24,7 @@ const Content = () => {
 
   const features = [
     {
-      Icon: Laptop,
+      Icon: SearchCheck,
       name: "Never Lose Anything Again",
       description:
         "All of your files across all platforms and services, all in one place.",
@@ -52,21 +44,21 @@ const Content = () => {
       background: <img className="absolute -right-20 -top-20 opacity-60" />,
     },
     {
-      Icon: TrendingUpIcon,
-      name: "Scalable Infrastructure",
+      Icon: LockKeyhole,
+      name: "Safe With You",
       description:
-        "Easily scale your GPU resources up or down based on your needs.",
-      href: "https://docs.tuna.opennote.me/reference/overview",
+        "All files and resources are saved directly on your device, making Sift lightweight, secure, and lightning fast.",
+      href: "https://github.com/abhi-arya1/siftai",
       cta: "Learn more",
       className: "col-span-3 lg:col-span-2 w-full",
       background: <img className="absolute -right-20 -top-20 opacity-60" />,
     },
     {
-      Icon: Cloud,
+      Icon: Blend,
       name: "App Integrations",
       description:
         "Seamlessly query any social platforms and productivity tools.",
-      href: "https://docs.tuna.opennote.me/reference/clouds",
+      href: "https://github.com/abhi-arya1/siftai",
       cta: "Learn more",
       className: "col-span-3 lg:col-span-1 w-full",
       background: (
