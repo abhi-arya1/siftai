@@ -7,6 +7,7 @@ use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
 use tauri::{CustomMenuItem, Menu, Submenu};
 use tokio::signal;
+use std::thread; 
 use util::{config_path, db_formatted_path};
 
 mod apis;
@@ -155,11 +156,23 @@ fn main() {
     println!("Chroma database is configured.\n");
 
     println!("Instantiating File Cache\n");
-    init_local_files();
-    println!("Local files are initialized.\n");
-    init_gh_files();
-    println!("GitHub files are initialized.\n");
-    
+
+    let local_handle = thread::spawn(|| {
+        init_local_files();
+        println!("Local files are initialized.\n");
+    });
+
+    let gh_handle = thread::spawn(|| {
+        init_gh_files();
+        println!("GitHub files are initialized.\n");
+    });
+
+    // Join the threads to ensure both complete
+    local_handle.join().expect("Failed to initialize local files");
+    gh_handle.join().expect("Failed to initialize GitHub files");
+
+    println!("Both tasks are completed.");
+
 
     let _ = start_chroma_query_agent();
     println!("Running Chroma Query Agent on http://localhost:35443...\n");

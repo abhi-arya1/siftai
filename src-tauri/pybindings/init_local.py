@@ -141,14 +141,14 @@ documents_dir = Path(os.environ.get("HOME")) / "Documents"
 downloads_dir = Path(os.environ.get("HOME")) / "Downloads"
 
 
-# if documents_dir.exists():
-#     print("Parsing Documents directory...")
-#     parse_files(coll, documents_dir)
+if documents_dir.exists():
+    print("Parsing Documents directory...")
+    parse_files(coll, documents_dir)
 
 
-# if downloads_dir.exists():
-#     print("Parsing Downloads directory...")
-#     parse_files(coll, downloads_dir)
+if downloads_dir.exists():
+    print("Parsing Downloads directory...")
+    parse_files(coll, downloads_dir)
 
 print("Done with file parse")
 
