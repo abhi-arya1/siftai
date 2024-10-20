@@ -47,14 +47,14 @@ const Footer = () => {
             </ContactModal> */}
             <Button
               onClick={() => {
-                window.open("https://docs.opennote.me/about-us");
+                window.open("https://github.com/abhi-arya1/siftai");
               }}
               variant="link"
               className="text-muted-foreground font-light"
             >
-              <p>About Us</p>
+              <p>Github</p>
             </Button>
-            <Button
+            {/* <Button
               onClick={() => {
                 window.open("https://docs.opennote.me/hiring");
               }}
@@ -62,11 +62,11 @@ const Footer = () => {
               className="text-muted-foreground font-light"
             >
               <p>Hiring</p>
-            </Button>
+            </Button> */}
           </div>
 
           <div className="flex flex-col gap-y-0 items-start justify-start">
-            <Button
+            {/* <Button
               onClick={() => {
                 window.open("mailto:support@opennote.me");
               }}
@@ -74,7 +74,7 @@ const Footer = () => {
               className="text-muted-foreground font-light"
             >
               <p>Contact</p>
-            </Button>
+            </Button> */}
             <Button
               onClick={() => {
                 window.open("https://docs.tuna.opennote.me");
@@ -82,9 +82,9 @@ const Footer = () => {
               variant="link"
               className="text-muted-foreground font-light"
             >
-              <p>Documentation</p>
+              <p>Devpost</p>
             </Button>
-            <Button
+            {/* <Button
               onClick={() => {
                 window.open("https://docs.tuna.opennote.me/changelog");
               }}
@@ -92,7 +92,7 @@ const Footer = () => {
               className="text-muted-foreground font-light"
             >
               <p>Patch Notes</p>
-            </Button>
+            </Button> */}
             {/* <Button
               onClick={() => {
                 router.push("/terms");

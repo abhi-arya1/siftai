@@ -111,7 +111,7 @@ const Navbar = () => {
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <Link
-                  href="https://github.com/abhi-arya1/tuna"
+                  href="https://github.com/abhi-arya1/siftai"
                   legacyBehavior
                   passHref
                 >

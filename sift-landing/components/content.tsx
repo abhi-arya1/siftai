@@ -33,18 +33,20 @@ const Content = () => {
   const features = [
     {
       Icon: Laptop,
-      name: "Run On Any Computer",
-      description: "Never worry about hardware bottlenecks again.",
-      href: "https://docs.tuna.opennote.me/installation",
+      name: "Never Lose Anything Again",
+      description:
+        "All of your files across all platforms and services, all in one place.",
+      href: "https://github.com/abhi-arya1/siftai",
       cta: "Learn more",
       className: "col-span-3 lg:col-span-1 w-full",
       background: <Meteors number={30} />,
     },
     {
       Icon: PlugZap,
-      name: "Supercharge Your AI Workflow",
-      description: "The fastest code-generation and dataset service.",
-      href: "https://docs.tuna.opennote.me/introduction",
+      name: "Supercharge Your Workflow",
+      description:
+        "Real-time natural language querying and autocompletion so you can worry less about annoying filenames and more on what matters.",
+      href: "https://github.com/abhi-arya1/siftai",
       cta: "Get Started",
       className: "col-span-3 lg:col-span-2 w-full",
       background: <img className="absolute -right-20 -top-20 opacity-60" />,
@@ -95,7 +97,7 @@ const Content = () => {
   return (
     <div className="mt-44 z-10 flex flex-col items-center gap-y-40 justify-center w-full md:w-[75%] px-4 mb-16">
       <div className="flex flex-col items-center justify-center">
-        <div className="pb-16 w-full grid grid-cols-1 md:grid-cols-2 gap-x-12 mb-20">
+        {/* <div className="pb-16 w-full grid grid-cols-1 md:grid-cols-2 gap-x-12 mb-20">
           <div className="flex flex-col items-center justify-center pb-8">
             <SparklesText
               className="pb-8 text-center"
@@ -105,7 +107,7 @@ const Content = () => {
               FIND ANY FILE OR ITEM ON YOUR COMPUTER OR SOCIAL PLATFORMS. <br />
             </span>
           </div>
-        </div>
+        </div> */}
         <div>
           <SparklesText
             className="pb-8 text-center"
@@ -124,8 +126,8 @@ const Content = () => {
           </BentoGrid>
         </div>
       </div>
-      <div className="flex flex-col items-center justify-center pb-20">
-        <SparklesText
+      {/* <div className="flex flex-col items-center justify-center pb-20"> */}
+      {/* <SparklesText
           className="text-center"
           text="Proudly Open-Source."
         ></SparklesText>
@@ -152,8 +154,8 @@ const Content = () => {
               className="align-middle"
             ></ShinyButton>
           </a>
-        </div>
-      </div>
+        </div> */}
+      {/* </div> */}
 
       {/* <div className="w-full flex flex-col items-center justify-center gap-y-20">
         <SparklesText
@@ -173,19 +175,19 @@ const Content = () => {
         </div>
       </div> */}
 
-      <div className="w-full flex flex-col items-center justify-center">
+      {/* <div className="w-full flex flex-col items-center justify-center">
         <SparklesText
           className="text-center"
           text="Try Tuna Today."
         ></SparklesText>
-        {/* <h3 className="font-normal text-lg text-muted-foreground text-center pt-4">What are you waiting for?</h3> */}
+        <h3 className="font-normal text-lg text-muted-foreground text-center pt-4">What are you waiting for?</h3>
         <div className="pt-6">
           <ShinyButton
             className="align-middle"
             text="Get Started"
           ></ShinyButton>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };
