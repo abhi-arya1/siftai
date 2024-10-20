@@ -83,7 +83,7 @@ const Content = () => {
               )}
             >
               <div className="flex flex-col items-center justify-center h-full">
-                <></>
+                <integration.icon size={32} />
               </div>
             </figure>
           ))}
