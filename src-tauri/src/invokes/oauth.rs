@@ -604,9 +604,23 @@ pub async fn discord_oauth() -> Result<String, String> {
 }
 
 pub async fn google_oauth() -> Result<String, String> {
-    let google_client_id =
-        "97283464398-5dp31l4s5p38tvh9m621p7954v1rm2cs.apps.googleusercontent.com";
-    let google_secret = "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";
+    dotenv().ok();
+    let mut client_id: String = String::new();
+    let mut client_secret: String = String::new();
+
+    match env::var("GOOGLE_CLIENT_ID") {
+        Ok(value) => {
+            client_id = value; 
+        },
+        Err(e) => println!("Couldn't read GOOGLE_CLIENT_ID: {}", e),
+    };
+
+    match env::var("GOOGLE_SECRET") {
+        Ok(value) => {
+            client_secret = value;
+        },
+        Err(e) => println!("Couldn't read GOOGLE_SECRET: {}", e),
+    };
 
     let mut cfg = util::read_config().unwrap();
     // let google_client_id: &str = google_client_id.as_str();

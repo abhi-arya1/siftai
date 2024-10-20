@@ -75,6 +75,8 @@
         "resizable": true,
         "title": "sift",
         "width": 800,
+        "minWidth": 800,
+        "minHeight": 600,
         "decorations": true,
         "transparent": true
       }
