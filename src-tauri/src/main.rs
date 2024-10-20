@@ -3,16 +3,14 @@
     windows_subsystem = "windows"
 )]
 
-use files::get_gh_repos;
 use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
-use tauri::{CustomMenuItem, Menu, Submenu};
+use tauri::{AppHandle, CustomMenuItem, Menu, Submenu};
 use tokio::signal;
 use util::db_formatted_path;
 
 mod apis;
 mod chroma;
-mod files;
 mod invokes;
 mod util;
 
@@ -48,8 +46,27 @@ fn start_chroma_db() {
         &chroma::Action::GetOrCreate {
             collection_name: "siftfiles".to_string(),
         },
+        false,
     )
     .expect("Failed to create Chroma database collection");
+}
+
+fn start_chroma_query_agent() -> Arc<Mutex<std::process::Child>> {
+    let chrqr = Arc::new(Mutex::new(
+        Command::new("uvicorn")
+            .arg("src.queryapi:app")
+            .arg("--host")
+            .arg("127.0.0.1")
+            .arg("--port")
+            .arg("35443")
+            .stdout(Stdio::inherit()) // Inherit standard output for logging
+            .stderr(Stdio::inherit()) // Inherit standard error for logging
+            .spawn()
+            .expect("Failed to start Chroma server on Windows"),
+    ));
+
+    let _ = Arc::clone(&chrqr);
+    chrqr
 }
 
 #[tauri::command]
@@ -58,9 +75,8 @@ fn run_subprocess(command: String) -> Result<String, String> {
 }
 
 #[tauri::command]
-fn rungh() -> Result<String, String> {
-    get_gh_repos();
-    Ok("Fetching GitHub repositories...".to_string())
+fn end_app() {
+    std::process::exit(0);
 }
 
 #[tauri::command]
@@ -101,17 +117,16 @@ fn main() {
     println!("\nBeginning Sift.AI Startup...\n");
 
     let command = format!("chroma run --path {} --port 35436", db_formatted_path());
-    // let chroma_clone = start_chroma_server(&command);
+    let _ = start_chroma_server(&command);
 
     println!("Chroma server is running in the background on http://localhost:35436.\n");
     println!("AppConfig: {:?}", app_cfg);
 
-    // start_chroma_db();
+    start_chroma_db();
     println!("Chroma database is configured.\n");
 
-    println!("Parsing files in the background...");
-    // files::parse_files();
-    // files::get_gh_repos();
+    let _ = start_chroma_query_agent();
+    println!("Running Chroma Query Agent on http://localhost:35443...\n");
 
     println!("\nCompleted Startup Configurations\n");
 
@@ -146,7 +161,7 @@ fn main() {
             ntn_oauth,
             disc_oauth,
             ggl_oauth,
-            rungh
+            end_app
         ])
         .menu(Menu::new().add_submenu(submenu))
         .on_window_event(move |event| {

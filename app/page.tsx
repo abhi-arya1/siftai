@@ -7,6 +7,7 @@ import React, {
   Fragment,
 } from "react";
 import Image from "next/image";
+import SearchBox from "./search_box";
 // import sift_logo from "../src-tauri/icons/sift_logo.png";
 import { Menu, Transition, Dialog } from "@headlessui/react";
 import { motion } from "framer-motion";
@@ -40,6 +41,7 @@ import { Input } from "@/components/ui/input";
 import { Kbd } from "@nextui-org/kbd";
 import { cn } from "@/lib/utils";
 import { invoke } from "@tauri-apps/api/tauri";
+import { queryChroma } from "@/lib/chromalib";
 
 type SearchResultItem = {
   id: number;
@@ -61,7 +63,7 @@ const mockResults: SearchResultItem[] = [
     id: 2,
     filename: "image.jpg",
     abspath: "https://example.com/image.jpg",
-    local: false,
+    local: true,
     filecontent: "https://example.com/image.jpg",
   },
 ];
@@ -142,25 +144,29 @@ const FilePreview = ({ file }: { file: SearchResultItem }) => {
       if (fileType === "image") {
         // Fetch binary content for images
         const response = await client.get(
-          `http://localhost:35438/Desktop/IMG_0776.png`,
+          `http://localhost:35438/Documents/test.png`,
           {
             responseType: ResponseType.Binary,
           },
         );
-        console.log(response.data);
-        const blob = new Blob([response.data as any], { type: "image/png" });
-        const asset = URL.createObjectURL(blob);
-        console.log(asset);
-        setImageSrc(asset);
+        const base64 = btoa(
+          new Uint8Array(response.data as ArrayBuffer).reduce(
+            (data, byte) => data + String.fromCharCode(byte),
+            "",
+          ),
+        );
+
+        // Create data URL
+        const dataUrl = `data:image/${file.filename.split(".").pop()};base64,${base64}`;
+        setImageSrc(dataUrl);
       } else {
         // Fetch text-based files
         const response = await client.get(
-          `http://localhost:35438/Documents/random.txt`,
+          `http://localhost:35438${file.abspath}`,
           {
             responseType: ResponseType.Text,
           },
         );
-        console.log(response.data);
         setContent(response.data as any);
       }
     };
@@ -174,27 +180,27 @@ const FilePreview = ({ file }: { file: SearchResultItem }) => {
 
   const fileType = getFileType(file.filename);
 
+  if (fileType === "image") {
+    return imageSrc ? (
+      <img
+        src={imageSrc}
+        alt={file.filename}
+        className="rounded-lg"
+        style={{ border: "2px solid #f97316" }}
+      />
+    ) : null;
+  }
+
   return (
-    <div className="h-full overflow-auto p-4">
-      {fileType === "image" ? (
-        <div className="relative w-full h-full min-h-[300px]">
-          {imageSrc && (
-            <img
-              src={imageSrc}
-              alt={file.filename}
-              className="object-contain w-full h-full"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
-          )}
-        </div>
-      ) : fileType === "code" ? (
-        <pre className="bg-gray-50 dark:bg-[#1f1f1f] p-4 rounded-lg overflow-auto">
+    <div
+      className={`h-full w-full overflow-auto p-4 rounded-lg ${fileType !== "image" ? "border-1 border-orange-500" : ""}`}
+    >
+      {fileType === "code" ? (
+        <pre className="bg-gray-50 dark:bg-[#1f1f1f] rounded-lg">
           <code className="text-sm font-mono">{content}</code>
         </pre>
       ) : (
-        <div className="bg-white dark:bg-[#1f1f1f] p-4 text-black dark:text-white rounded-lg whitespace-pre-wrap">
+        <div className="bg-white dark:bg-[#1f1f1f] text-black dark:text-white whitespace-pre-wrap">
           {content}
         </div>
       )}
@@ -454,7 +460,7 @@ const FileExplorer = () => {
                     className={`group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 text-red-500 ${
                       active ? "bg-gray-100 dark:bg-white/10" : ""
                     } hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out`}
-                    // onClick={() => invoke("exit-app")}
+                    onClick={() => invoke("end_app")}
                   >
                     Quit Sift
                     <XIcon size={16} className="ml-auto text-red-500" />
@@ -487,7 +493,7 @@ const FileExplorer = () => {
               </div>
 
               <div className="space-y-2">
-                <button onClick={async () => invoke('rungh')}>
+                <button onClick={async () => await queryChroma('Tests')}>
                   Run GitHub
                 </button>
                 <IntegrationCard
@@ -543,8 +549,8 @@ const FileExplorer = () => {
                 className={`p-3 rounded-lg cursor-pointer ${
                   selectedResult?.id === result.id ||
                   (focusedArea === "fileTree" && focusedIndex === index)
-                    ? "dark:bg-orange-500 text-black"
-                    : "hover:bg-gray-100 text-white dark:hover:bg-white/10"
+                    ? "bg-orange-500 text-black"
+                    : "hover:bg-gray-100 text-black dark:text-white dark:hover:bg-white/10"
                 } transition-colors duration-150 ease-in-out`}
                 onClick={() => handleFileClick(result, index)}
               >
@@ -647,7 +653,7 @@ const FileExplorer = () => {
 
         {/* Action shortcuts bar */}
         <div className="h-8 select-none px-4 flex items-center justify-end space-x-4 text-xs">
-          {["Actions"].map((action, i) => (
+          {["Actions", "Accept Suggestions"].map((action, i) => (
             <span
               key={action}
               className="select-none flex items-center justify-end gap-2"
@@ -656,7 +662,7 @@ const FileExplorer = () => {
                 {action}
               </span>
               <kbd className="select-none px-1.5 py-0.5 text-[12px] font-medium rounded border dark:bg-[#1f1f1f] dark:border-muted-foreground dark:text-white text-zinc-400">
-                {["⌘ K"][i]}
+                {["⌘ K", "Tab"][i]}
               </kbd>
             </span>
           ))}
@@ -668,16 +674,7 @@ const FileExplorer = () => {
           <div>{files}</div>
         </button> */}
         <div className="h-12 flex px-1.5 items-center gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-            <Input
-              type="text"
-              placeholder="Search files..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 dark:bg-zinc-800 dark:border-zinc-700 bg-zinc-50 border-zinc-200 rounded-lg text-zinc-500 dark:text-zinc-400 focus:ring-0 focus:border-zinc-200 dark:focus:border-zinc-700"
-            />
-          </div>
+          <SearchBox onSearch={(query) => setSearchQuery(query)} />
         </div>
       </div>
     </div>
