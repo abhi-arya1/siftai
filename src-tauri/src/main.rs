@@ -9,6 +9,9 @@ use std::thread;
 use tauri::{CustomMenuItem, Menu, Submenu};
 use tokio::signal;
 use util::{config_path, db_formatted_path};
+use std::fs::File;
+use std::io::Read;
+
 
 mod apis;
 mod chroma;
@@ -102,6 +105,14 @@ fn run_subprocess(command: String) -> Result<String, String> {
 #[tauri::command]
 fn end_app() {
     std::process::exit(0);
+}
+
+#[tauri::command]
+fn read_pdf_file(file_path: String) -> Result<Vec<u8>, String> {
+    let mut file = File::open(&file_path).map_err(|e| e.to_string())?;
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer).map_err(|e| e.to_string())?;
+    Ok(buffer)
 }
 
 #[tauri::command]
@@ -204,7 +215,8 @@ fn main() {
             ntn_oauth,
             disc_oauth,
             ggl_oauth,
-            end_app
+            end_app,
+            read_pdf_file
         ])
         .menu(Menu::new().add_submenu(submenu))
         .on_window_event(move |event| {

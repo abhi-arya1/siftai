@@ -54,6 +54,8 @@ type SearchResultItem = {
   filecontent: string;
 };
 
+
+
 const mockResults: SearchResultItem[] = [
   {
     id: 1,
@@ -130,7 +132,7 @@ const getFileType = (filename: string): string => {
 };
 
 
-const FilePreview = ({ file }: { file: ChromaFile }) => {
+const FilePreview = ({ file, pdfUrl }: { file: ChromaFile, pdfUrl: string }) => {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
 
   useEffect(() => {
@@ -151,16 +153,25 @@ const FilePreview = ({ file }: { file: ChromaFile }) => {
 
   // PDF rendering in iframe
   if (fileType === "pdf") {
-    const pdfUrl = `http://localhost:35438${file.metadata.filepath.replace("Users/ashwa/", "")}`;
+    // const pdfUrl = `http://localhost:35438${file.metadata.filepath.replace("Users/ashwa/", "")}`;
+    // return (
+    //   <iframe
+    //     src={pdfUrl}
+    //     title={file.metadata.filepath}
+    //     className="w-full h-full rounded-lg border border-orange-500"
+    //     width={800}
+    //     height={600}
+    //   ></iframe>
+    // );
     return (
-      <iframe
-        src={pdfUrl}
-        title={file.metadata.filepath}
-        className="w-full h-full rounded-lg border border-orange-500"
-        width={800}
-        height={600}
-      ></iframe>
-    );
+      <div>
+        {pdfUrl ? (
+          <iframe src={pdfUrl} width="100%" height="600px" title="PDF Viewer"></iframe>
+        ) : (
+          <p>Loading PDF...</p>
+        )}
+      </div>
+    )
   }
 
   // Text-based file rendering (includes code and plain text)
@@ -168,7 +179,7 @@ const FilePreview = ({ file }: { file: ChromaFile }) => {
     <div className="h-full w-full p-4 rounded-lg overflow-scroll">
       {fileType === "code" ? (
         <pre className="bg-gray-50 dark:bg-[#1f1f1f] rounded-lg">
-          <code className="text-sm font-mono">{file.document}</code>
+          <code className="text-sm dark:text-white font-mono">{file.document}</code>
         </pre>
       ) : (
         <div className="bg-white dark:bg-[#1f1f1f] text-black dark:text-white whitespace-pre-wrap">
@@ -197,6 +208,7 @@ const FileExplorer = () => {
   const [discordToken, setDiscordToken] = useState<string | null>(null);
   const [notionToken, setNotionToken] = useState<string | null>(null);
   const [googleToken, setGoogleToken] = useState<string | null>(null);
+  const [pdfUrl, setPDFUrl] = useState("");
 
   const [currentSummary, setCurrentSummary] = useState("");
 
@@ -211,6 +223,21 @@ const FileExplorer = () => {
 
     fetchFiles();
   }, [searchQuery]);
+
+  useEffect(() => {
+    const fetchPDF = async () => {
+      if (selectedResult) {
+        const type = getFileType(selectedResult.metadata?.filepath);
+        if (type === "pdf") {
+          const pdfData = await invoke('read_pdf_file', { filePath: selectedResult.metadata.filepath });
+          const pdfBlob = new Blob([new Uint8Array(pdfData as any)], { type: 'application/pdf' });
+          const pdfUrl = URL.createObjectURL(pdfBlob);
+          setPDFUrl(pdfUrl);
+        }
+      }
+    }
+    fetchPDF();
+  }, [selectedResult])
 
   useEffect(() => {
     const fetchSummary = async () => {
@@ -560,7 +587,7 @@ useEffect(() => {
                 </div>
               </div>
               <div className="flex-1 overflow-hidden bg-white dark:bg-[#1f1f1f] border border-orange-500 rounded-lg shadow-sm">
-                <FilePreview file={selectedResult} />
+                <FilePreview file={selectedResult} pdfUrl={pdfUrl} />
               </div>
             </>
           ) : (

@@ -24,7 +24,7 @@ with open(appdata_dir, 'r') as jf:
 key = data["notion_token"]
 # username = data["github_username"]
 
-cur_file_id = 0
+cur_file_id = 5
 
 start = time()
 
