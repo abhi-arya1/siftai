@@ -42,6 +42,7 @@ import { Kbd } from "@nextui-org/kbd";
 import { cn } from "@/lib/utils";
 import { invoke } from "@tauri-apps/api/tauri";
 import { queryChroma, ChromaFile } from "@/lib/chromalib";
+import { getSummary } from "@/lib/groq_parsing";
 
 type SearchResultItem = {
   id: number;
@@ -196,6 +197,8 @@ const FileExplorer = () => {
   const [notionToken, setNotionToken] = useState<string | null>(null);
   const [googleToken, setGoogleToken] = useState<string | null>(null);
 
+  const [currentSummary, setCurrentSummary] = useState("");
+
   const [allfiles, setAllFiles] = useState<ChromaFile[]>([]);
 
   // Fetch real-time files based on search query
@@ -207,6 +210,17 @@ const FileExplorer = () => {
 
     fetchFiles();
   }, [searchQuery]);
+
+  useEffect(() => {
+    const fetchSummary = async () => {
+      if (selectedResult) {
+        const summary = await getSummary(selectedResult.document, searchQuery);
+        setCurrentSummary(summary);
+      }
+    }
+
+    fetchSummary();
+  }, [selectedResult])
 
   // Handle file selection
   const handleFileClick = useCallback(
@@ -288,6 +302,46 @@ const FileExplorer = () => {
       .catch((err) => {
         setGoogleToken(err as string);
       });
+  };
+
+  const getFileActions = (fileType: any) => {
+    const commonActions = [
+      { id: "copy", label: "Copy", shortcut: "⌘ C" },
+      { id: "delete", label: "Delete", shortcut: "⌘ ⌫" },
+    ];
+    const typeSpecificActions = {
+      pdf: [
+        { id: "open", label: "Open in PDF viewer", shortcut: "⌘O" },
+        { id: "extract", label: "Extract Text", shortcut: "⌘E" },
+      ],
+      markdown: [
+        { id: "preview", label: "Toggle Preview", shortcut: "⌘P" },
+        { id: "export", label: "Export as PDF", shortcut: "⌘⇧E" },
+      ],
+    };
+    return [
+      ...commonActions,
+      ...(typeSpecificActions[fileType as keyof typeof typeSpecificActions] ||
+        []),
+    ];
+  };
+
+useEffect(() => {
+    const handleKeyboard = (e: KeyboardEvent) => {
+      if (e.metaKey && e.key === "k") {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+      }
+      if (e.key === "Escape") {
+        setIsCommandPaletteOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyboard);
+    return () => window.removeEventListener("keydown", handleKeyboard);
+  }, []);
+  const handleMenuAction = (action: string) => {
+    console.log(`Executing action: ${action}`);
+    setIsCommandPaletteOpen(false);
   };
 
   return (
@@ -448,8 +502,9 @@ const FileExplorer = () => {
                   {selectedResult.metadata.filepath.split("/").pop()}
                 </h2>
                 <div className="bg-white dark:bg-[#1f1f1f] p-3 rounded-lg shadow-sm">
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                  <p className="flex flex-col gap-y-4 text-sm text-gray-600 dark:text-gray-300">
                     <strong>Path:</strong> {selectedResult.metadata.filepath}
+                    <strong>Summary: </strong> {currentSummary}
                   </p>
                 </div>
               </div>
@@ -465,8 +520,71 @@ const FileExplorer = () => {
         </div>
       </div>
 
-      {/* Search bar */}
+      {/* Bottom section */}
       <div className="relative dark:border-muted-foreground">
+        {/* Command Palette */}
+        <Menu as="div" className="absolute right-4 bottom-full mb-2">
+          <Transition
+            show={isCommandPaletteOpen}
+            as={Fragment}
+            enter="transition ease-out duration-100"
+            enterFrom="transform opacity-0 scale-95"
+            enterTo="transform opacity-100 scale-100"
+            leave="transition ease-in duration-75"
+            leaveFrom="transform opacity-100 scale-100"
+            leaveTo="transform opacity-0 scale-95"
+          >
+            <Menu.Items
+              static
+              className="w-[280px] origin-bottom rounded-lg border p-1 text-sm items-center shadow-lg border-gray-200 dark:border-white/5 focus:outline-none dark:bg-[#1F1F1F] bg-white dark:text-white text-zinc-900"
+            >
+              <div className="px-3 py-2 text-xs font-medium opacity-50">
+                Actions for {selectedResult?.filename || "selected file"}
+              </div>
+              {selectedResult &&
+                getFileActions(selectedResult.type).map((action) => (
+                  <Menu.Item key={action.id}>
+                    {({ active }) => (
+                      <button
+                        className={`tracking-wide group flex w-full justify-between gap-2 items-center rounded-lg py-1.5 px-3 ${
+                          active ? "bg-gray-100 dark:bg-white/10" : ""
+                        } hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out`}
+                        onClick={() => handleMenuAction(action.id)}
+                      >
+                        <span className="select-none justify-start">
+                          {action.label}
+                        </span>
+                        <kbd className="px-1.5 py-0.5 text-[12px] font-medium rounded border dark:bg-[#1F1F1F] dark:border-muted-foreground dark:text-white bg-zinc-100 border-zinc-200 text-zinc-500">
+                          {action.shortcut}
+                        </kbd>
+                      </button>
+                    )}
+                  </Menu.Item>
+                ))}
+            </Menu.Items>
+          </Transition>
+        </Menu>
+        {/* Action shortcuts bar */}
+        <div className="h-8 select-none px-4 flex items-center justify-end space-x-4 text-xs">
+          {["Accept Suggestions", "Actions"].map((action, i) => (
+            <span
+              key={action}
+              className="select-none flex items-center justify-end gap-2"
+            >
+              <span className="select-none dark:text-zinc-400 text-zinc-600">
+                {action}
+              </span>
+              <kbd className="select-none px-1.5 py-0.5 text-[12px] font-medium rounded border dark:bg-[#1F1F1F] dark:border-muted-foreground dark:text-white text-zinc-400">
+                {["Tab", "⌘ K"][i]}
+              </kbd>
+            </span>
+          ))}
+        </div>
+        {/* Search bar */}
+        {/* <button onClick={handleFetchFiles}>
+          Hello World
+          <div>{files}</div>
+        </button> */}
         <div className="h-12 flex px-1.5 items-center gap-2">
           <SearchBox onSearch={(query) => setSearchQuery(query)} />
         </div>

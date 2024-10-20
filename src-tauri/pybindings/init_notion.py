@@ -87,11 +87,12 @@ def process_page(page):
     text = ""
     
     for block in data["results"]:
-        text += extract_text_from_block(block)
-    
-    print(text)
+        if block["type"] == "paragraph" and block.get("paragraph", {}).get("rich_text"):
+            text += block["paragraph"]["rich_text"][0]["plain_text"] + "\n"
+
 
     global cur_file_id 
+    # print(text)
     coll.add(documents=[text], ids=[f"noti{cur_file_id}"], metadatas=[{
         "filepath": page["url"],
         "location": "notion"

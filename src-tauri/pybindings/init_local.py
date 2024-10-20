@@ -74,6 +74,12 @@ def parse_files(collection: chromadb.Collection, directory: Path):
             if "d.ts" in file.name:
                 continue
 
+            if "api" in file.name:
+                continue
+
+            if "key" in file.name:
+                continue
+
             if "csharp" in file.name:
                 continue
 
@@ -118,6 +124,10 @@ def parse_files(collection: chromadb.Collection, directory: Path):
                         "filepath": path,
                         "location": "local"
                     }
+                
+                if extracted_text == "":
+                    continue 
+
                 collection.add(documents=[extracted_text], ids=[file_id], metadatas=[file_metadata]) 
                 cur_file_id += 1 
 
@@ -129,6 +139,9 @@ def parse_files(collection: chromadb.Collection, directory: Path):
                         "filepath": path,
                         "location": "local"
                     }
+
+                    if file_content.strip() == "":
+                        continue
 
                     collection.add(documents=[file_content], ids=[file_id], metadatas=[file_metadata])
 

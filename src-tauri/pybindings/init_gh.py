@@ -100,7 +100,10 @@ def process_repo(repo):
                             'webp' in lowerized or \
                             'avif' in lowerized or \
                             'woff' in lowerized or \
-                            "__init__" in lowerized):
+                            "__init__" in lowerized or \
+                            "egg-info" in lowerized or \
+                            "img" in lowerized or \
+                            "mod" in lowerized):
                     continue 
 
                 print(filename)
