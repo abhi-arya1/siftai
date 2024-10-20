@@ -111,7 +111,7 @@ fn main() {
 
     println!("Parsing files in the background...");
     // files::parse_files();
-    files::get_gh_repos();
+    // files::get_gh_repos();
 
     println!("\nCompleted Startup Configurations\n");
 

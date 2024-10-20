@@ -73,7 +73,7 @@ pub async fn github_oauth() -> Result<String, String> {
 
     let (tx, mut rx) = mpsc::channel::<String>(1);
 
-    let html_content = include_str!("auth_page.html");
+    let html_content = include_str!("../.././auth_page.html");
 
     let redirect_route = warp::path!("gh_auth_callback")
         .and(warp::query::raw())
