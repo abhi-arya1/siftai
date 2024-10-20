@@ -27,7 +27,6 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "framer-motion": "^11.11.9",
-    "groq": "^3.61.0",
     "groq-sdk": "^0.7.0",
     "lucide-react": "^0.453.0",
     "next": "14.2.15",

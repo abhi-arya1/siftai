@@ -55,7 +55,7 @@ const mockResults: SearchResultItem[] = [
   {
     id: 1,
     filename: "random.txt",
-    abspath: "/Users/ashwa/Documents/random.txt",
+    abspath: "/Documents/random.txt",
     local: true,
     filecontent: "This is a sample document content...",
   },
@@ -73,7 +73,7 @@ const IntegrationCard = ({ logo: Logo, name, isAuthenticated, onClick }) => {
 
   return (
     <div
-      className="w-[50%] p-3 flex flex-grid rounded-lg dark:bg-muted hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out cursor-pointer"
+      className="w-[50%] p-3 flex flex-grid rounded-lg dark:bg-[#1f1f1f] border border-1 hover:disabled:border border-bg-white/10 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out cursor-pointer"
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -185,7 +185,7 @@ const FilePreview = ({ file }: { file: SearchResultItem }) => {
       <img
         src={imageSrc}
         alt={file.filename}
-        className="rounded-lg"
+        className="rounded-lg object-fit"
         style={{ border: "2px solid #f97316" }}
       />
     ) : null;
@@ -193,14 +193,14 @@ const FilePreview = ({ file }: { file: SearchResultItem }) => {
 
   return (
     <div
-      className={`h-full w-full overflow-auto p-4 rounded-lg ${fileType !== "image" ? "border-1 border-orange-500" : ""}`}
+      className={`h-full w-full overflow-auto p-4 rounded-lg object-fit ${fileType !== "image" ? "border-1 border-orange-500" : ""}`}
     >
       {fileType === "code" ? (
-        <pre className="bg-gray-50 dark:bg-[#1f1f1f] rounded-lg">
+        <pre className="bg-gray-50 dark:bg-[#1f1f1f] rounded-lg object-fit">
           <code className="text-sm font-mono">{content}</code>
         </pre>
       ) : (
-        <div className="bg-white dark:bg-[#1f1f1f] text-black dark:text-white whitespace-pre-wrap">
+        <div className="bg-white dark:bg-[#1f1f1f] text-black object-fit dark:text-white whitespace-pre-wrap">
           {content}
         </div>
       )}
@@ -479,7 +479,7 @@ const FileExplorer = () => {
           <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
 
           <div className="fixed inset-0 flex items-center justify-center p-4 transition-all duration-150 ease-in-out">
-            <Dialog.Panel className="mx-auto rounded-xl w-[40%] bg-white dark:bg-muted p-6 shadow-xl transition-all duration-150 ease-in-out">
+            <Dialog.Panel className="mx-auto rounded-xl w-[60%] bg-white dark:bg-[#1f1f1f] p-6 shadow-xl transition-all duration-150 ease-in-out">
               <div className="flex justify-between items-center mb-4">
                 <Dialog.Title className="text-lg font-medium dark:text-white">
                   Integrations
@@ -492,8 +492,13 @@ const FileExplorer = () => {
                 </button>
               </div>
 
+<<<<<<< HEAD
               <div className="space-y-2">
                 <button onClick={async () => await queryChroma('Tests')}>
+=======
+              <div className="grid grid-cols-2 gap-y-2">
+                <button onClick={async () => invoke("rungh")}>
+>>>>>>> f89a55c (ux)
                   Run GitHub
                 </button>
                 <IntegrationCard
@@ -653,7 +658,7 @@ const FileExplorer = () => {
 
         {/* Action shortcuts bar */}
         <div className="h-8 select-none px-4 flex items-center justify-end space-x-4 text-xs">
-          {["Actions", "Accept Suggestions"].map((action, i) => (
+          {["Accept Suggestions", "Actions"].map((action, i) => (
             <span
               key={action}
               className="select-none flex items-center justify-end gap-2"
@@ -662,7 +667,7 @@ const FileExplorer = () => {
                 {action}
               </span>
               <kbd className="select-none px-1.5 py-0.5 text-[12px] font-medium rounded border dark:bg-[#1f1f1f] dark:border-muted-foreground dark:text-white text-zinc-400">
-                {["⌘ K", "Tab"][i]}
+                {["Tab", "⌘ K"][i]}
               </kbd>
             </span>
           ))}
