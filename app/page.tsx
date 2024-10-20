@@ -61,7 +61,7 @@ const mockResults: SearchResultItem[] = [
     id: 2,
     filename: "image.jpg",
     abspath: "https://example.com/image.jpg",
-    local: false,
+    local: true,
     filecontent: "https://example.com/image.jpg",
   },
 ];
@@ -142,25 +142,29 @@ const FilePreview = ({ file }: { file: SearchResultItem }) => {
       if (fileType === "image") {
         // Fetch binary content for images
         const response = await client.get(
-          `http://localhost:35438/Desktop/IMG_0776.png`,
+          `http://localhost:35438/Documents/test.png`,
           {
             responseType: ResponseType.Binary,
           },
         );
-        console.log(response.data);
-        const blob = new Blob([response.data as any], { type: "image/png" });
-        const asset = URL.createObjectURL(blob);
-        console.log(asset);
-        setImageSrc(asset);
+        const base64 = btoa(
+          new Uint8Array(response.data as ArrayBuffer).reduce(
+            (data, byte) => data + String.fromCharCode(byte),
+            "",
+          ),
+        );
+
+        // Create data URL
+        const dataUrl = `data:image/${file.filename.split(".").pop()};base64,${base64}`;
+        setImageSrc(dataUrl);
       } else {
         // Fetch text-based files
         const response = await client.get(
-          `http://localhost:35438/Documents/random.txt`,
+          `http://localhost:35438${file.abspath}`,
           {
             responseType: ResponseType.Text,
           },
         );
-        console.log(response.data);
         setContent(response.data as any);
       }
     };
@@ -174,27 +178,27 @@ const FilePreview = ({ file }: { file: SearchResultItem }) => {
 
   const fileType = getFileType(file.filename);
 
+  if (fileType === "image") {
+    return imageSrc ? (
+      <img
+        src={imageSrc}
+        alt={file.filename}
+        className="rounded-lg"
+        style={{ border: "2px solid #f97316" }}
+      />
+    ) : null;
+  }
+
   return (
-    <div className="h-full overflow-auto p-4">
-      {fileType === "image" ? (
-        <div className="relative w-full h-full min-h-[300px]">
-          {imageSrc && (
-            <img
-              src={imageSrc}
-              alt={file.filename}
-              className="object-contain w-full h-full"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
-          )}
-        </div>
-      ) : fileType === "code" ? (
-        <pre className="bg-gray-50 dark:bg-[#1f1f1f] p-4 rounded-lg overflow-auto">
+    <div
+      className={`h-full w-full overflow-auto p-4 rounded-lg ${fileType !== "image" ? "border-1 border-orange-500" : ""}`}
+    >
+      {fileType === "code" ? (
+        <pre className="bg-gray-50 dark:bg-[#1f1f1f] rounded-lg">
           <code className="text-sm font-mono">{content}</code>
         </pre>
       ) : (
-        <div className="bg-white dark:bg-[#1f1f1f] p-4 text-black dark:text-white rounded-lg whitespace-pre-wrap">
+        <div className="bg-white dark:bg-[#1f1f1f] text-black dark:text-white whitespace-pre-wrap">
           {content}
         </div>
       )}
@@ -487,7 +491,7 @@ const FileExplorer = () => {
               </div>
 
               <div className="space-y-2">
-                <button onClick={async () => invoke('rungh')}>
+                <button onClick={async () => invoke("rungh")}>
                   Run GitHub
                 </button>
                 <IntegrationCard
