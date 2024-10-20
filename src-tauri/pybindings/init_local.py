@@ -60,7 +60,8 @@ def parse_files(collection: chromadb.Collection, directory: Path):
             if file.suffix[1:] in [
                 "dmg", "zip", "xls", "xlsx", "csv", "tar", "gz", "bz2", "xz", "7z", "rar", "iso", "exe", "dll", "bin",
                 "so", "obj", "class", "o", "pyc", "lock", "log", "tmp", "config", "cfg", "ini", "svg", "json", "xml", "yaml", "yml", "data"
-                "plist", "db", "db-wal", "db-shm", "mp4", "mpeg4", "mov", "avi", "mkv", "flv", "wmv", "webm", "lock", "lockb", "bin", "sh", "obj", "photosLibrary"
+                "plist", "db", "db-wal", "db-shm", "mp4", "mpeg4", "mov", "avi", "mkv", "flv", "wmv", "webm", "lock", "lockb", "bin", "sh", "obj", "photosLibrary",
+                "html", "css", "timestamp", "ipynb", "env", "env.local", "ico"
             ]: 
                 continue 
             
