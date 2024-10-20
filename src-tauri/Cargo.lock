@@ -323,7 +323,6 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
- "serde_qs",
  "tauri",
  "tauri-build",
  "tauri-plugin-localhost",

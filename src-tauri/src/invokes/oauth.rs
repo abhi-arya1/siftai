@@ -603,7 +603,6 @@ pub async fn discord_oauth() -> Result<String, String> {
 }
 
 pub async fn google_oauth() -> Result<String, String> {
-<<<<<<< HEAD
     dotenv().ok();
     let mut client_id: String = String::new();
     let mut client_secret: String = String::new();
@@ -621,11 +620,6 @@ pub async fn google_oauth() -> Result<String, String> {
         },
         Err(e) => println!("Couldn't read GOOGLE_SECRET: {}", e),
     };
-=======
-    let google_client_id =
-        "97283464398-5dp31l4s5p38tvh9m621p7954v1rm2cs.apps.googleusercontent.com";
-    let google_secret = "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";
->>>>>>> a0807deceeb6419dcfc68505aafbf6b949e09559
 
     let mut cfg = util::read_config().unwrap();
     let google_client_id: &str = client_id.as_str();
