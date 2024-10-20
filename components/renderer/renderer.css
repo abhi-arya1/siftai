@@ -1,0 +1,361 @@
+
+
+@import "katex/dist/katex.min.css";
+
+
+.parser {
+    --code-bg: #f5f5f5; /* Light mode background for code */
+    --code-color: #333; /* Light mode text color for code */
+
+    --pre-bg: #ececec; /* Light mode background for pre */
+    --pre-color: #333; /* Light mode text color for pre */
+
+    /* Light mode token colors */
+    --token-comment: #6a737d;
+    --token-punctuation: #444;
+    --token-property: #0366d6;
+    --token-tag: #22863a;
+    --token-boolean: #d73a49;
+    --token-number: #005cc5;
+    --token-constant: #005cc5;
+    --token-symbol: #e36209;
+    --token-deleted: #b31d28;
+    --token-selector: #e36209;
+    --token-attr-name: #6f42c1;
+    --token-string: #032f62;
+    --token-char: #032f62;
+    --token-builtin: #6f42c1;
+    --token-inserted: #22863a;
+    --token-operator: #d73a49;
+    --token-entity: #d73a49;
+    --token-url: #d73a49;
+    --token-atrule: #d73a49;
+    --token-attr-value: #005cc5;
+    --token-keyword: #d73a49;
+    --token-function: #6f42c1;
+    --token-class-name: #6f42c1;
+    --token-regex: #032f62;
+    --token-important: #032f62;
+    --token-variable: #d73a49;
+    --link: #0366d6;
+    --link-hover: #4d00c1;
+}
+
+.dark .parser { 
+    --code-bg: #1e1e1e; /* Dark mode background for code */
+    --code-color: #d4d4d4; /* Dark mode text color for code */
+
+    --pre-bg: #252526; /* Dark mode background for pre */
+    --pre-color: #d4d4d4; /* Dark mode text color for pre */
+
+    /* Dark mode token colors */
+    --token-comment: slategray;
+    --token-punctuation: #999;
+    --token-property: #dcdcaa;
+    --token-tag: #dcdcaa;
+    --token-boolean: #569cd6;
+    --token-number: #b5cea8;
+    --token-constant: #b5cea8;
+    --token-symbol: #b5cea8;
+    --token-deleted: #b5cea8;
+    --token-selector: #d7ba7d;
+    --token-attr-name: #9cdcfe;
+    --token-string: #ce9178;
+    --token-char: #ce9178;
+    --token-builtin: #ce9178;
+    --token-inserted: #ce9178;
+    --token-operator: #d4d4d4;
+    --token-entity: #d4d4d4;
+    --token-url: #d4d4d4;
+    --token-atrule: #c586c0;
+    --token-attr-value: #c586c0;
+    --token-keyword: #569cd6;
+    --token-function: #dcdcaa;
+    --token-class-name: #4ec9b0;
+    --token-regex: #d16969;
+    --token-important: #d16969;
+    --token-variable: #d16969;
+    --link: #569cd6;
+    --link-hover: #4ec9b0;
+  }
+
+.parser h1,
+.parser h2,
+.parser h3 {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin-top: 1em;
+}
+
+.parser h4,
+.parser h5,
+.parser h6 {
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 0.8em;
+}
+
+.parser a {
+  color: var(--link)
+}
+
+.parser a:hover {
+  color: var(--link-hover)
+}
+
+.parser img {
+  width: 100%;
+  height: auto;
+  margin-bottom: 1em;
+}
+
+.parser code {
+  background-color: var(--code-bg);
+  border-radius: 5px;
+  padding: 5px 10px;
+  overflow: auto;
+  color: var(--pre-color);
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+
+.parser pre {
+  background-color: var(--code-bg);
+  padding: 10px;
+  border-radius: 5px;
+  overflow: auto;
+  color: var(--pre-color);
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+
+/* Syntax highlighting styles */
+.parser .token.comment,
+.parser .token.prolog,
+.parser .token.doctype,
+.parser .token.cdata {
+  color: var(--token-comment);
+}
+
+.parser .token.punctuation {
+  color: var(--token-punctuation);
+}
+
+.parser .namespace {
+  opacity: 0.7;
+}
+
+.parser .token {
+  color: var(--code-color);
+}
+
+.parser .token.property,
+.parser .token.tag,
+.parser .token.boolean,
+.parser .token.number,
+.parser .token.constant,
+.parser .token.symbol,
+.parser .token.deleted {
+  color: var(--token-property);
+}
+
+.parser .text {
+  color: var(--pre-color);
+}
+
+.parser .token.selector,
+.parser .token.attr-name,
+.parser .token.string,
+.parser .token.char,
+.parser .token.builtin,
+.parser .token.inserted {
+  color: var(--token-selector);
+}
+
+.parser .token.operator,
+.parser .token.entity,
+.parser .token.url,
+.parser .language-css .token.string,
+.parser .style .token.string {
+  color: var(--token-operator);
+  background-color: var(--code-bg);
+}
+
+.parser .token.atrule,
+.parser .token.attr-value,
+.parser .token.keyword {
+  color: var(--token-atrule);
+}
+
+.parser .token.function,
+.parser .token.class-name {
+  color: var(--token-function);
+}
+
+.parser .token.regex,
+.parser .token.important,
+.parser .token.variable {
+  color: var(--token-regex);
+}
+
+.parser .token.important,
+.parser .token.bold {
+  font-weight: bold;
+}
+
+.parser .token.italic {
+  font-style: italic;
+}
+
+.parser .token.entity {
+  cursor: help;
+}
+
+.parser .token.plain-text {
+  color: var(--code-color); /* Adjust as needed */
+  background-color: var(--code-bg); /* Adjust as needed */
+}
+
+.parser ul,
+.parser ol {
+  margin-left: 17px;
+  padding-left: 0;
+  margin-top: 13px; 
+  margin-bottom: 13px;
+}
+
+.parser li {
+  margin-bottom: 0.5em;
+}
+
+.parser li:last-child {
+  margin-bottom: 0;
+}
+
+.parser .code-block {
+  position: relative;
+  margin-top: 1.1em;
+  margin-left: 1em;
+  margin-right: 1em;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: var(--code-bg);
+  color: var(--pre-color);
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+
+.parser .code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--pre-bg);
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.parser .language-id {
+  font-weight: bold;
+  font-size: 0.9em;
+  color: var(--pre-color);
+}
+
+.copy-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+}
+
+.parser .copy-btn:hover {
+  text-decoration: underline;
+  color: var(--muted);
+}
+
+.parser .code-block {
+    position: relative;
+    margin-top: 1.1em;
+    margin-left: 1em;
+    margin-right: 1em;
+    margin-bottom: 1.1em;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: var(--code-bg);
+    color: var(--pre-color);
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+  
+  .parser .code-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--pre-bg);
+    padding: 5px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .parser .language-id {
+    font-weight: bold;
+    font-size: 0.9em;
+    color: var(--pre-color);
+  }
+  
+  .parser .copy-btn {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.8em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease;
+  }
+  
+  .parser .copy-btn:hover {
+    background-color: var(--muted);
+    color: var(--muted-foreground);
+  }
+
+  /* LaTeX block styling */
+.latex-block {
+  position: relative;
+  margin-top: 1.1em;
+  margin-left: 1em;
+  margin-right: 1em;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  /* background-color: var(--code-bg); */
+  color: var(--pre-color);
+  overflow: auto;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+
+.latex-block .katex {
+  font-size: 1.2em;
+}
+
+.parser blockquote {
+    margin: 0 0 1em 1em;
+    margin-top: 1em; 
+    padding-left: 1em;
+    border-left: 5px solid var(--token-property);
+    background-color: var(--pre-bg);
+    padding: 0.5em 1em;
+    border-radius: 0 8px 8px 0;
+  }
+  
+  .dark .parser blockquote {
+    border-left-color: var(--token-property);
+    background-color: var(--pre-bg);
+  }

@@ -45,6 +45,7 @@ import { cn } from "@/lib/utils";
 import { invoke } from "@tauri-apps/api/tauri";
 import { queryChroma, ChromaFile } from "@/lib/chromalib";
 import { getSummary } from "@/lib/groq_parsing";
+import { parseMarkdown } from "@/components/renderer/parser";
 
 type SearchResultItem = {
   id: number;
@@ -183,7 +184,7 @@ const FilePreview = ({ file, pdfUrl }: { file: ChromaFile, pdfUrl: string }) => 
         </pre>
       ) : (
         <div className="bg-white dark:bg-[#1f1f1f] text-black dark:text-white whitespace-pre-wrap">
-          {file.document}
+          <div dangerouslySetInnerHTML={{ __html: parseMarkdown(file.document) }} />
         </div>
       )}
     </div>
@@ -412,6 +413,35 @@ useEffect(() => {
     }
     setIsCommandPaletteOpen(false); // Close palette after action
   };
+
+  const isValidUrl = (string: string) => {
+    try {
+      new URL(string);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+
+  const LocationDisplay = ({ filepath, location }: { filepath: string, location: string }) => {
+    const isUrl = isValidUrl(filepath);
+    const isNonLocal = location !== "local";
+
+    if (isNonLocal && isUrl) {
+      return (
+        <a
+          href={filepath}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-500 hover:underline"
+        >
+          {filepath}
+        </a>
+      );
+    }
+
+    return <span>{filepath}</span>;
+  };
   
   
 
@@ -576,7 +606,12 @@ useEffect(() => {
                 <div className="bg-white dark:bg-[#1f1f1f] p-3 rounded-lg shadow-sm">
                   <p className="flex flex-col gap-y-4 text-sm text-gray-600 dark:text-gray-300">
                     <div className="w-full border pl-2 pb-2 pt-1 rounded-lg border-bg-white/10">
-                      <strong className="focus:outline-none select-none">Location:</strong> {selectedResult.metadata.filepath}
+                      <strong className="focus:outline-none select-none">Location:</strong> 
+                        {/* {selectedResult.metadata.filepath} */}
+                        <LocationDisplay 
+                        filepath={selectedResult.metadata.filepath} 
+                        location={selectedResult.metadata.location || "local"}
+                    />
                     </div>
                     <div className="w-full border pl-2 pb-2 pt-1 rounded-lg border-bg-white/10">
                       <strong className="focus:outline-none select-none">Summary: </strong> <br/>

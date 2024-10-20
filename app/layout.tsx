@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="overscroll-none">
+    <html lang="en" className="overscroll-none overflow-clip">
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"
