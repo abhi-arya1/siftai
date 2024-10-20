@@ -8,6 +8,8 @@ import React, {
 } from "react";
 import Image from "next/image";
 import SearchBox from "./search_box";
+import { remark } from "remark";
+import html from "remark-html";
 // import sift_logo from "../src-tauri/icons/sift_logo.png";
 import { Menu, Transition, Dialog } from "@headlessui/react";
 import { motion } from "framer-motion";
@@ -94,31 +96,29 @@ const IntegrationCard = ({ logo: Logo, name, isAuthenticated, onClick }) => {
   );
 };
 
-const fileTypeActions = {
+const actionSchema = {
   txt: [
-    { id: "open", label: "Open", shortcut: "⌘O" },
-    { id: "edit", label: "Edit", shortcut: "⌘E" },
-    { id: "copy", label: "Copy", shortcut: "⌘C" },
-    { id: "delete", label: "Delete", shortcut: "⌘⌫" },
+    { id: "copyContents", label: "Copy Contents", shortcut: "⌘ C", command: "copyContents" },
+    { id: "copyFilePath", label: "Copy Filepath", shortcut: "⌘ ⇧ C", command: "copyFilePath" },
   ],
-  jpg: [
-    { id: "view", label: "View", shortcut: "⌘V" },
-    { id: "download", label: "Download", shortcut: "⌘D" },
-    { id: "share", label: "Share", shortcut: "⌘S" },
-    { id: "delete", label: "Delete", shortcut: "⌘⌫" },
+  image: [
+    { id: "copyFilePath", label: "Copy Filepath", shortcut: "⌘ ⇧ C", command: "copyFilePath" },
+    { id: "view", label: "View Image in New Tab", shortcut: "⌘ V", command: "viewImage" },
   ],
-  py: [
-    { id: "run", label: "Run", shortcut: "⌘R" },
-    { id: "edit", label: "Edit", shortcut: "⌘E" },
-    { id: "debug", label: "Debug", shortcut: "⌘D" },
-    { id: "copy", label: "Copy", shortcut: "⌘C" },
+  pdf: [
+    { id: "copyFilePath", label: "Copy Filepath", shortcut: "⌘ ⇧ C", command: "copyFilePath" },
+    { id: "open", label: "Open in Viewer", shortcut: "⌘ O", command: "openFile" },
+  ],
+  code: [
+    { id: "copyContents", label: "Copy Contents", shortcut: "⌘ C", command: "copyContents" },
+    { id: "copyFilePath", label: "Copy Filepath", shortcut: "⌘ ⇧ C", command: "copyFilePath" },
   ],
   default: [
-    { id: "open", label: "Open", shortcut: "⌘O" },
-    { id: "copy", label: "Copy", shortcut: "⌘C" },
-    { id: "delete", label: "Delete", shortcut: "⌘⌫" },
+    { id: "copyContents", label: "Copy Contents", shortcut: "⌘ C", command: "copyContents" },
+    { id: "copyFilePath", label: "Copy Filepath", shortcut: "⌘ ⇧ C", command: "copyFilePath" },
   ],
 };
+
 
 const getFileType = (filename: string): string => {
   const ext = filename.split(".").pop()?.toLowerCase() || "";
@@ -129,11 +129,12 @@ const getFileType = (filename: string): string => {
   return "text";
 };
 
+
 const FilePreview = ({ file }: { file: ChromaFile }) => {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
 
   useEffect(() => {
-    const fileType = getFileType(file.metadata.filepath); // Get file type based on file extension
+    const fileType = getFileType(file.metadata.filepath);
 
     if (fileType === "image") {
       const dataUrl = `data:image/${file.metadata.filepath.split(".").pop()};base64,${file.document}`;
@@ -150,10 +151,10 @@ const FilePreview = ({ file }: { file: ChromaFile }) => {
 
   // PDF rendering in iframe
   if (fileType === "pdf") {
-    // const pdfUrl = `data:application/pdf;base64,${file.document}`;
+    const pdfUrl = `http://localhost:35438${file.metadata.filepath.replace("Users/ashwa/", "")}`;
     return (
       <iframe
-        src={`http://localhost:35438${file.metadata.filepath.replace("Users/ashwa/", "")}`}
+        src={pdfUrl}
         title={file.metadata.filepath}
         className="w-full h-full rounded-lg border border-orange-500"
         width={800}
@@ -304,27 +305,39 @@ const FileExplorer = () => {
       });
   };
 
-  const getFileActions = (fileType: any) => {
-    const commonActions = [
-      { id: "copy", label: "Copy", shortcut: "⌘ C" },
-      { id: "delete", label: "Delete", shortcut: "⌘ ⌫" },
-    ];
-    const typeSpecificActions = {
-      pdf: [
-        { id: "open", label: "Open in PDF viewer", shortcut: "⌘O" },
-        { id: "extract", label: "Extract Text", shortcut: "⌘E" },
-      ],
-      markdown: [
-        { id: "preview", label: "Toggle Preview", shortcut: "⌘P" },
-        { id: "export", label: "Export as PDF", shortcut: "⌘⇧E" },
-      ],
-    };
-    return [
-      ...commonActions,
-      ...(typeSpecificActions[fileType as keyof typeof typeSpecificActions] ||
-        []),
-    ];
+  const getFileActions = (fileType: string) => {
+    return actionSchema[fileType] || actionSchema.default;
   };
+
+  useEffect(() => {
+    if (!isCommandPaletteOpen) return;
+  
+    const handleKeyPress = (event: KeyboardEvent) => {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const modifierKey = isMac ? event.metaKey : event.ctrlKey;
+      
+      // Handle "CMD/Ctrl + Key" shortcuts
+      if (modifierKey && event.key === 'c') {
+        if (event.shiftKey) {
+          handleMenuAction("copyFilePath"); // CMD/Ctrl + Shift + C
+        } else {
+          handleMenuAction("copyContents"); // CMD/Ctrl + C
+        }
+        event.preventDefault();
+      } else if (modifierKey && event.key === 'v') {
+        if (getFileType(selectedResult?.metadata.filepath) === "image") {
+          handleMenuAction("viewImage"); // CMD/Ctrl + V for image files
+          event.preventDefault();
+        }
+      }
+    };
+  
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [isCommandPaletteOpen, selectedResult]);
+  
+  
+  
 
 useEffect(() => {
     const handleKeyboard = (e: KeyboardEvent) => {
@@ -339,19 +352,51 @@ useEffect(() => {
     window.addEventListener("keydown", handleKeyboard);
     return () => window.removeEventListener("keydown", handleKeyboard);
   }, []);
+  
   const handleMenuAction = (action: string) => {
-    console.log(`Executing action: ${action}`);
-    setIsCommandPaletteOpen(false);
+    switch (action) {
+      case "copyContents":
+        navigator.clipboard.writeText(selectedResult?.document || "");
+        console.log("Copied file contents");
+        break;
+      case "copyFilePath":
+        navigator.clipboard.writeText(selectedResult?.metadata.filepath || "");
+        console.log("Copied file path");
+        break;
+      case "openFile":
+        console.log("Opening file:", selectedResult?.metadata.filepath);
+        // Add logic to open the file
+        break;
+      case "viewImage":
+        if (selectedResult) {
+          // Check if the file is an image and handle base64 content
+          const fileType = getFileType(selectedResult.metadata.filepath);
+          if (fileType === "image") {
+            const dataUrl = `data:image/${selectedResult.metadata.filepath.split(".").pop()};base64,${selectedResult.document}`;
+            const newTab = window.open();
+            if (newTab) {
+              newTab.document.body.innerHTML = `<img src="${dataUrl}" alt="${selectedResult.metadata.filepath}" />`;
+            }
+          }
+        }
+        break;
+      default:
+        console.log(`Unknown action: ${action}`);
+    }
+    setIsCommandPaletteOpen(false); // Close palette after action
   };
+  
+  
 
   return (
     <div className="h-screen flex flex-col dark:bg-[#1F1F1F]">
       {/* SETTINGS MODAL */}
-      <div className="h-8 border-b border-zinc-700 flex justify-end items-center px-2">
+      <div className="h-8 flex justify-end items-center px-2">
         <Menu>
           <Menu.Button className="pl-2 rounded-lg hover:drop-shadow-xl focus:outline-none">
             <div className="flex items-center flex-row gap-x-0.75 p-1 rounded-md bg-white dark:bg-[#1f1f1f] hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out">
-              <Settings className="text-black dark:text-white" size={14} />
+              <span className="text-sm pr-1 text-muted-foreground">Settings</span>
+              <Settings className="text-muted-foreground" size={14} />
             </div>
           </Menu.Button>
           <Transition
@@ -415,7 +460,7 @@ useEffect(() => {
                 </button>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 justify-center">
                 <IntegrationCard
                   logo={IconBrandGithub}
                   name="GitHub"
@@ -503,8 +548,14 @@ useEffect(() => {
                 </h2>
                 <div className="bg-white dark:bg-[#1f1f1f] p-3 rounded-lg shadow-sm">
                   <p className="flex flex-col gap-y-4 text-sm text-gray-600 dark:text-gray-300">
-                    <strong>Path:</strong> {selectedResult.metadata.filepath}
-                    <strong>Summary: </strong> {currentSummary}
+                    <div className="w-full border pl-2 pb-2 pt-1 rounded-lg border-bg-white/10">
+                      <strong className="focus:outline-none select-none">Location:</strong> {selectedResult.metadata.filepath}
+                    </div>
+                    <div className="w-full border pl-2 pb-2 pt-1 rounded-lg border-bg-white/10">
+                      <strong className="focus:outline-none select-none">Summary: </strong> <br/>
+                       {currentSummary}
+
+                    </div>
                   </p>
                 </div>
               </div>
@@ -538,30 +589,34 @@ useEffect(() => {
               static
               className="w-[280px] origin-bottom rounded-lg border p-1 text-sm items-center shadow-lg border-gray-200 dark:border-white/5 focus:outline-none dark:bg-[#1F1F1F] bg-white dark:text-white text-zinc-900"
             >
-              <div className="px-3 py-2 text-xs font-medium opacity-50">
-                Actions for {selectedResult?.filename || "selected file"}
+              <div className="px-3 py-2 text-xs font-medium dark:bg-[#1f1f1f]">
+                
+                <span className="truncate max-w-[150px] inline-block align-bottom">
+                  {selectedResult?.metadata.filepath.split("/").pop() || "selected file"}
+                </span>
               </div>
               {selectedResult &&
-                getFileActions(selectedResult.type).map((action) => (
-                  <Menu.Item key={action.id}>
-                    {({ active }) => (
-                      <button
-                        className={`tracking-wide group flex w-full justify-between gap-2 items-center rounded-lg py-1.5 px-3 ${
-                          active ? "bg-gray-100 dark:bg-white/10" : ""
-                        } hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out`}
-                        onClick={() => handleMenuAction(action.id)}
-                      >
-                        <span className="select-none justify-start">
-                          {action.label}
-                        </span>
-                        <kbd className="px-1.5 py-0.5 text-[12px] font-medium rounded border dark:bg-[#1F1F1F] dark:border-muted-foreground dark:text-white bg-zinc-100 border-zinc-200 text-zinc-500">
-                          {action.shortcut}
-                        </kbd>
-                      </button>
-                    )}
-                  </Menu.Item>
-                ))}
+                getFileActions(getFileType(selectedResult.metadata.filepath)).map(
+                  (action) => (
+                    <Menu.Item key={action.id}>
+                      {({ active }) => (
+                        <button
+                          className={`tracking-wide group flex w-full justify-between gap-2 items-center rounded-lg py-1.5 px-3 ${
+                            active ? "bg-gray-100 dark:bg-white/10" : ""
+                          } hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-150 ease-in-out`}
+                          onClick={() => handleMenuAction(action.command)}
+                        >
+                          <span>{action.label}</span>
+                          <kbd className="px-1.5 py-0.5 text-[12px] font-medium rounded border dark:bg-[#1F1F1F] dark:border-muted-foreground dark:text-white bg-zinc-100 border-zinc-200 text-zinc-500">
+                            {action.shortcut}
+                          </kbd>
+                        </button>
+                      )}
+                    </Menu.Item>
+                  )
+                )}
             </Menu.Items>
+
           </Transition>
         </Menu>
         {/* Action shortcuts bar */}
