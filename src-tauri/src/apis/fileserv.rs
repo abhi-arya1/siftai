@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 // use std::path::PathBuf;
 
 async fn get_file(req: HttpRequest, path: web::Path<PathBuf>) -> impl Responder {
-    println!("Requesting file: {:?}", path);
+    // println!("Requesting file: {:?}", path);
     let home_dir = match env::var("HOME") {
         Ok(dir) => dir,
         Err(_) => {

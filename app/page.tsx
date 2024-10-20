@@ -23,7 +23,7 @@ import {
   FileText,
   ImageIcon,
 } from "lucide-react";
-import { IconBrandGithub, IconBrandNotion, IconBrandGoogle } from "@tabler/icons-react";
+import { IconBrandGithub, IconBrandNotion, IconBrandGoogle, IconBrandDiscordFilled } from "@tabler/icons-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@nextui-org/kbd";
@@ -410,7 +410,7 @@ const FileExplorer = () => {
                   onClick={handleNotionOauth}
                 />
                 <IntegrationCard
-                  logo={() => <FontAwesomeIcon icon={faDiscord} />}
+                  logo={IconBrandDiscordFilled}
                   name="Discord"
                   isAuthenticated={!!discordToken}
                   onClick={handleDiscordOauth}
