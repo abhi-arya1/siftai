@@ -323,6 +323,7 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "serde_qs",
  "tauri",
  "tauri-build",
  "tauri-plugin-localhost",
@@ -4080,8 +4081,6 @@ checksum = "af99884400da37c88f5e9146b7f1fd0fbcae8f6eec4e9da38b67d05486f814a6"
 dependencies = [
  "itoa 1.0.11",
  "serde",
-<<<<<<< HEAD
-=======
 ]
 
 [[package]]
@@ -4093,7 +4092,6 @@ dependencies = [
  "percent-encoding",
  "serde",
  "thiserror",
->>>>>>> fe6d71a (ui styling)
 ]
 
 [[package]]

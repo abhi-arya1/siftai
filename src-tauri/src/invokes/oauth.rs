@@ -623,8 +623,8 @@ pub async fn google_oauth() -> Result<String, String> {
     };
 
     let mut cfg = util::read_config().unwrap();
-    // let google_client_id: &str = google_client_id.as_str();
-    // let google_secret: &str = &google_secret.as_str();
+    let google_client_id: &str = &client_id.as_str();
+    let google_secret: &str = &client_secret.as_str();
 
     // Return the token if it already exists
     if !cfg.google_token.is_empty() {
