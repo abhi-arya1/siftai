@@ -11,7 +11,7 @@ use base64;
 use crossbeam_channel::bounded;
 use threadpool::ThreadPool;
 
-use crate::chroma::{self, Action};
+use crate::chroma;
 use crate::util::db_formatted_path;
 
 #[derive(Debug, Clone, serde::Serialize)] // Add Serialize for FileMetadata
@@ -167,10 +167,10 @@ pub fn parse_files() {
     println!("Time taken to parse files: {:.2?}", duration);
     println!("Total files processed: {}", file_count.load(Ordering::Relaxed));
 
-    // Write the contents to JSON files
-    let docs_lock = documents.lock().unwrap();
-    let meta_lock = metadata.lock().unwrap();
-    let ids_lock = ids.lock().unwrap();
+    // // Write the contents to JSON files
+    // let docs_lock = documents.lock().unwrap();
+    // let meta_lock = metadata.lock().unwrap();
+    // let ids_lock = ids.lock().unwrap();
 
     // write_to_json("docs.json", &*docs_lock).expect("Failed to write docs.json");
     // write_to_json("ids.json", &*ids_lock).expect("Failed to write ids.json");

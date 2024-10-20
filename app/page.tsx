@@ -319,7 +319,7 @@ const FileExplorer = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-white dark:bg-muted text-black dark:text-white">
+    <div className="h-screen flex flex-col dark:bg-[#1F1F1F]">
       {/* SETTINGS MODAL */}
       <div className="h-8 border-b border-zinc-700 flex justify-end items-center px-2">
         <Menu>
