@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Authorization Successful</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --bg-color: #ffffff;
+                --text-color: #24292e;
+                --button-bg: #ea580c;
+                --button-hover: #2c974b;
+                --card-bg: #f6f8fa;
+                --border-color: #e1e4e8;
+            }
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --bg-color: #0d1117;
+                    --text-color: #c9d1d9;
+                    --button-bg: #238636;
+                    --button-hover: #2ea043;
+                    --card-bg: #161b22;
+                    --border-color: #30363d;
+                }
+            }
+            body {
+                font-family: "Inter", sans-serif;
+                background-color: var(--bg-color);
+                color: var(--text-color);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+                transition: background-color 0.3s ease;
+            }
+            .container {
+                background-color: var(--card-bg);
+                padding: 2rem;
+                border-radius: 6px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                text-align: center;
+                max-width: 400px;
+                width: 90%;
+                border: 1px solid var(--border-color);
+            }
+            .icon {
+                width: 60px;
+                height: 60px;
+                margin-bottom: 1rem;
+            }
+            h1 {
+                font-size: 24px;
+                font-weight: 600;
+                margin-bottom: 0.5rem;
+            }
+            p {
+                color: var(--text-color);
+                opacity: 0.8;
+                margin-bottom: 1.5rem;
+            }
+            button {
+                background-color: var(--button-bg);
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                border-radius: 6px;
+                transition: background-color 0.3s;
+            }
+            button:hover {
+                background-color: var(--button-hover);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <img src="/sift_logo.png" alt="Service Icon" class="icon" />
+            <h1>Authorization Successful</h1>
+            <p>You have successfully authorized the application.</p>
+            <button onclick="closeTab()">Close this window</button>
+        </div>
+
+        <script>
+            function closeTab() {
+                window.close();
+            }
+        </script>
+    </body>
+</html>
